@@ -14,19 +14,24 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 //Page Imports
 import CreateSurveyPage from './CreateSurveyPage.js'; // Adjust the path based on your file structure
+import ViewSurvey from './ViewSurvey.js';
 
 
 const SettingsPage = () => <div>Settings Page</div>;
 const CreateSurvey = () => <div>Create Survey Page</div>;
 const SendSurveyPage = () => <div>Send Survey Page</div>;
 const ViewResponsesPage = () => <div>View Responses Page</div>;
+const ViewCurrentSurveys = () => <div>View Current Surveys</div>;
+
 const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Create Survey', icon: <CreateIcon />, route: '/createSurvey' },
   { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey' },
   { text: 'View Responses', icon: <ListAltIcon />, route: '/viewResponses' },
-  { text: 'Analyze Results', icon: <AssessmentIcon />, route: '/analyzeResults' }
+  { text: 'Analyze Results', icon: <AssessmentIcon />, route: '/analyzeResults' },
+  { text: 'View Surveys', icon: <AssessmentIcon />, route: '/viewSurveys' }
+
 ];
 const darkTheme = createTheme({
   palette: {
@@ -138,6 +143,8 @@ function App() {
           <Route path="/createSurvey" element={<CreateSurveyPage />} />
           <Route path="/sendSurvey" element={<SendSurveyPage />} />
           <Route path="/viewResponses" element={<ViewResponsesPage />} />
+          <Route path="/viewSurveys" element={<ViewSurvey/>} />
+
           {/* ... other routes ... */}
         </Routes>
                   </Paper>
