@@ -2,26 +2,29 @@ import React, { useState, useEffect } from 'react';
 
 function ViewSurvey() {
   const [surveys, setSurveys] = useState([]);
+  const [activeSurveyId, setActiveSurveyId] = useState(null); // Track the active survey
 
-  // Function to fetch surveys from the backend
   const fetchSurveys = async () => {
     try {
-      const response = await fetch('/get-surveys'); // Assuming '/get-surveys' is your endpoint
+      const response = await fetch('/get-surveys');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setSurveys(data.surveys); // Assuming the data returned is an object with a surveys property
+      console.log(data);
+      setSurveys(data.surveys);
     } catch (error) {
       console.error("Error fetching surveys:", error);
     }
   };
 
-  // Use useEffect to fetch surveys when the component mounts
   useEffect(() => {
     fetchSurveys();
-  }, []); // Empty dependency array means this effect runs once on mount
-
+  }, []);
+  // Function to toggle the active survey
+  const toggleActiveSurvey = (surveyId) => {
+    setActiveSurveyId(activeSurveyId === surveyId ? null : surveyId);
+  };
   return (
     <div>
       <h1>Surveys</h1>

@@ -68,7 +68,8 @@ export default function SurveyCreationPage() {
       alert('Please fill in all options for the multiple choice question.');
       return;
     }
-
+    console.log("before "+ questionText);
+    
     const newQuestion = {
       type: questionType,
       text: questionText,
@@ -77,15 +78,19 @@ export default function SurveyCreationPage() {
           undefined,
 
     };
-    setQuestions([...questions, newQuestion]);
+
+    console.log("after "+ questionText);
+
+   
+    setQuestions(prevQuestions => [...prevQuestions, newQuestion]);
     setCreatingQuestion(false);
     setQuestionType('');
     setQuestionText('');
     setQuestionOptions(['', '']);
   };
 
-  /*
-  const handleSubmitSurvey = () => {
+  
+  const handleCompleteSurvey = () => {
     if (questions.length === 0) {
       alert('Please add at least one question before completing the survey.');
       return;
@@ -93,44 +98,60 @@ export default function SurveyCreationPage() {
     setSurveyCreated(false);
     setIsSurveyComplete(true);
   };
-  */
+  
+// Example mapping of question types to integers
+const questionTypeMapping = {
+  trueFalse: 1,
+  multipleChoice: 2,
+  likertScale: 3,
+  // Add other mappings as per your questiontype table
+};
 
-  const handleSubmitSurvey = async () => {
-    const surveyData = {
-      surveyTitle: surveyName, // Using the surveyName state variable
-      surveyDescription: "Your survey description here", // Add a description if needed or use a state variable
-      questions: questions, // Using the questions state variable
-    };
+const handleSubmitSurvey = async () => {
+  // Convert question types from string to their corresponding integer IDs
+  const convertedQuestions = questions.map(question => ({
+    ...question,
+    questionType: questionTypeMapping[question.questionType],
+    // Assuming isRequired is already a boolean in your question object
+    // If not, convert it here as well
+  }));
 
-    try {
-      const response = await fetch('/create-survey', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(surveyData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Survey created:', result);
-      // Here you can update your component's state to reflect the successful creation
-      // For example, you might want to clear the form, or display a message, etc.
-      alert('Survey successfully created!');
-      // Reset or update state as necessary
-      setSurveyName('');
-      setQuestions([]);
-      setIsSurveyComplete(true); // If you're using this to show/hide the survey form
-    } catch (error) {
-      console.error('Error creating survey:', error);
-      // Handle the error, for example, by displaying a notification to the user
-      alert('Failed to create survey.');
-    }
+  const surveyData = {
+    surveyTitle: surveyName,
+    surveyDescription: "Your survey description here",
+    questions: convertedQuestions,
   };
 
+  try {
+    const response = await fetch('/create-survey', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(surveyData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Survey created:', result);
+    alert('Survey successfully created!');
+    // Reset or update state as necessary
+    setSurveyName('');
+    setQuestions([]);
+    setIsSurveyComplete(true);
+  } catch (error) {
+    console.error('Error creating survey:', error);
+    alert('Failed to create survey.');
+  }
+};
+
+  const ConsoleLog = () => {
+
+      console.log("TEST");
+  }
 
   return (
     <Box
