@@ -1,6 +1,9 @@
+
 const express = require('express')
 const { Pool } = require('pg')
-require('dotenv').config();
+
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express()
 
@@ -9,10 +12,9 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'postgres',
-  password: 'Redsfan1', // Hardcoded temporarily
+  password: process.env.DB_PASSWORD, 
   port: 5432,
 });
-
 
 
 app.use(express.json());
@@ -37,12 +39,8 @@ app.get('/get-surveys', async (req, res) => {
     res.status(500).json({ message: 'Error fetching surveys' });
   }
 });
-
-// API to retrieve survey creation information
 app.post('/create-survey', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
-  console.log(surveyTitle);
-  console.log(questions);
 
   try {
     await ensureTablesExist(pool);
@@ -58,20 +56,30 @@ app.post('/create-survey', async (req, res) => {
     // Prepare the question insertion query
     const questionInsertQuery = `
       INSERT INTO question (surveyid, questiontype, questiontext, ismandatory)
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4) RETURNING id
     `;
-
-    // Insert each question
+      
+    // Insert each question and its choices if applicable
     for (const question of questions) {
-      console.log(surveyId, question.type, question.text, question.isRequired ?? false);
-      await pool.query(questionInsertQuery, [
+      // Insert the question and get its ID
+      const questionResult = await pool.query(questionInsertQuery, [
         surveyId,
-        // Assuming you have a mapping from 'type' string to the corresponding integer ID
-        // For simplicity, let's assume 'trueFalse' maps to 1, etc. Adjust as necessary.
-        mapQuestionTypeToID(question.type),
+        question.questionType, // Already a numeric ID, no conversion needed
         question.text,
-        question.isRequired ?? false // Provide a default value if isRequired is missing
+        question.isRequired ?? false,
       ]);
+      const questionId = questionResult.rows[0].id;
+
+      // If the question is a multiple-choice type, insert its choices
+      if (question.questionType === 2 && question.choices) { // Assuming 2 is the ID for Multiple Choice
+        const choiceInsertQuery = `
+          INSERT INTO choice (questionid, choicetext)
+          VALUES ($1, $2)
+        `;
+        for (const choiceText of question.choices) {
+          await pool.query(choiceInsertQuery, [questionId, choiceText]);
+        }
+      }
     }
 
     await pool.query('COMMIT'); // Commit the transaction
@@ -83,16 +91,9 @@ app.post('/create-survey', async (req, res) => {
   }
 });
 
-// Example mapping function (adjust according to your actual questiontype IDs)
-function mapQuestionTypeToID(type) {
-  const typeMap = {
-    trueFalse: 1,
-    multipleChoice: 2,
-    likertScale: 3,
-    // Add other mappings as needed
-  };
-  return typeMap[type] || null; // Return null or a default value if type is not found
-}
+
+
+
 app.get('/get-surveys', async (req, res) => {
   try {
     // Fetch all questions
@@ -135,9 +136,6 @@ app.get('/get-surveys', async (req, res) => {
     res.status(500).json({ message: 'Error fetching surveys' });
   }
 });
-
-
-
 
 
 /*
