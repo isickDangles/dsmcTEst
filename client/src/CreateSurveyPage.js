@@ -20,19 +20,26 @@ export default function SurveyCreationPage() {
   const [creatingQuestion, setCreatingQuestion] = useState(false);
   const [questionType, setQuestionType] = useState('');
   const [questionText, setQuestionText] = useState('');
-  const [questionOptions, setQuestionOptions] = useState(['']); // Define questionOptions and its setter
+  const [questionChoices, setQuestionChoices] = useState(['']);
   const [questions, setQuestions] = useState([]);
-  const [surveyCreated, setSurveyCreated] = useState('');
+  const [surveyCreated, setSurveyCreated] = useState(false);
   const [isSurveyComplete, setIsSurveyComplete] = useState(false);
 
+  const questionTypeMapping = {
+    trueFalse: 3,
+    multipleChoice: 2,
+    likertScale: 1,
+    shortAnswer: 4,
+  };
 
   const handleSurveyNameChange = (event) => {
     setSurveyName(event.target.value);
   };
 
   const handleDeleteQuestion = (index) => {
-    setQuestions(questions.filter((_, qIndex) => qIndex !== index)); //Delete  
-  }
+    setQuestions(questions.filter((_, qIndex) => qIndex !== index));
+  };
+
   const handleCreateSurvey = () => {
     setSurveyCreated(true);
   };
@@ -42,6 +49,7 @@ export default function SurveyCreationPage() {
   };
 
   const handleQuestionTypeChange = (event) => {
+    console.log("QuestionType"+event.target.value )
     setQuestionType(event.target.value);
   };
 
@@ -49,109 +57,78 @@ export default function SurveyCreationPage() {
     setQuestionText(event.target.value);
   };
 
-  const handleOptionChange = (index, event) => {
-    const updatedOptions = questionOptions.map((option, i) => {
+  const handleChoiceChange = (index, event) => {
+    const updatedChoices = questionChoices.map((choice, i) => {
       if (i === index) {
         return event.target.value;
       }
-      return option;
+      return choice;
     });
-    setQuestionOptions(updatedOptions);
+    setQuestionChoices(updatedChoices);
   };
 
-  const handleAddOption = () => {
-    setQuestionOptions([...questionOptions, '']);
+  const handleAddChoice = () => {
+    setQuestionChoices([...questionChoices, '']);
   };
-
+  
   const handleCompleteQuestion = () => {
-    if (questionType === 'multipleChoice' && questionOptions.some(option => option === '')) {
-      alert('Please fill in all options for the multiple choice question.');
+    if (questionType === 'multipleChoice' && questionChoices.some(choice => choice === '')) {
+      alert('Please fill in all choices for the multiple-choice question.');
       return;
     }
-    console.log("before "+ questionText);
-    
+  
     const newQuestion = {
-      type: questionType,
       text: questionText,
-      options: questionType === 'multipleChoice' ? questionOptions :
-        questionType === 'likertScale' ? Array.from({ length: 10 }, (_, i) => (i + 1).toString()) :
-          undefined,
-
+      type: questionTypeMapping[questionType], // Use 'type' for internal state representation
+      choices: questionType === 'multipleChoice' ? questionChoices.filter(choice => choice.trim() !== '') : [],
     };
-
-    console.log("after "+ questionText);
-
-   
+  
     setQuestions(prevQuestions => [...prevQuestions, newQuestion]);
     setCreatingQuestion(false);
     setQuestionType('');
     setQuestionText('');
-    setQuestionOptions(['', '']);
-  };
-
-  
-  const handleCompleteSurvey = () => {
-    if (questions.length === 0) {
-      alert('Please add at least one question before completing the survey.');
-      return;
-    }
-    setSurveyCreated(false);
-    setIsSurveyComplete(true);
+    setQuestionChoices(['']);
   };
   
-// Example mapping of question types to integers
-const questionTypeMapping = {
-  trueFalse: 1,
-  multipleChoice: 2,
-  likertScale: 3,
-  // Add other mappings as per your questiontype table
-};
+  
 
-const handleSubmitSurvey = async () => {
-  // Convert question types from string to their corresponding integer IDs
-  const convertedQuestions = questions.map(question => ({
-    ...question,
-    questionType: questionTypeMapping[question.questionType],
-    // Assuming isRequired is already a boolean in your question object
-    // If not, convert it here as well
-  }));
+  const handleSubmitSurvey = async () => {
+    const convertedQuestions = questions.map(question => ({
+      text: question.text,
+      questionType: question.type, // This assumes the corrected line in `handleCompleteQuestion`
+      choices: question.choices || [],
+    }));
+  
+    const surveyData = {
+      surveyTitle: surveyName,
+      surveyDescription: "Your survey description here",
+      questions: convertedQuestions,
+    };
 
-  const surveyData = {
-    surveyTitle: surveyName,
-    surveyDescription: "Your survey description here",
-    questions: convertedQuestions,
-  };
+    try {
+      const response = await fetch('/create-survey', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(surveyData),
+      });
 
-  try {
-    const response = await fetch('/create-survey', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(surveyData),
-    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      console.log('Survey created:', result);
+      alert('Survey successfully created!');
+      setSurveyName('');
+      setQuestions([]);
+      setIsSurveyComplete(true);
+    } catch (error) {
+      console.error('Error creating survey:', error);
+      alert('Failed to create survey.');
     }
-
-    const result = await response.json();
-    console.log('Survey created:', result);
-    alert('Survey successfully created!');
-    // Reset or update state as necessary
-    setSurveyName('');
-    setQuestions([]);
-    setIsSurveyComplete(true);
-  } catch (error) {
-    console.error('Error creating survey:', error);
-    alert('Failed to create survey.');
-  }
-};
-
-  const ConsoleLog = () => {
-
-      console.log("TEST");
-  }
+  };
 
   return (
     <Box
@@ -205,6 +182,8 @@ const handleSubmitSurvey = async () => {
                 {question.type === 'trueFalse' ? 'True/False' :
                   question.type === 'multipleChoice' ? 'Multiple Choice' :
                     question.type === 'likertScale' ? 'Likert Scale (1-10)' :
+                    question.type === 'shortAnswer' ? 'Short Answer':
+
                       'Unknown Type'}
               </Box>
             </Box>
@@ -232,6 +211,8 @@ const handleSubmitSurvey = async () => {
                   <MenuItem value="trueFalse">True/False</MenuItem>
                   <MenuItem value="multipleChoice">Multiple Choice</MenuItem>
                   <MenuItem value="likertScale">Likert Scale (1-7)</MenuItem>
+                  <MenuItem value="shortAnswer">Short Answer</MenuItem>
+
                   {/* ... other question types */}
                 </Select>
               </FormControl>
@@ -243,21 +224,24 @@ const handleSubmitSurvey = async () => {
                 onChange={(e) => setQuestionText(e.target.value)}
                 sx={{ marginTop: 2 }}
               />
-              {questionType === 'multipleChoice' && questionOptions.map((option, index) => (
-                <TextField
-                  key={index}
-                  fullWidth
-                  label={`Option ${index + 1}`}
-                  value={option}
-                  onChange={(e) => handleOptionChange(index, e)}
-                  margin="normal"
-                />
-              ))}
+              {
+                questionType === 'multipleChoice' && questionChoices.map((choice, index) => (
+                  <TextField
+                    key={index}
+                    fullWidth
+                    label={`Choice ${index + 1}`}
+                    value={choice}
+                    onChange={(e) => handleChoiceChange(index, e)}
+                    margin="normal"
+                  />
+                ))
+              }
               {questionType === 'multipleChoice' && (
-                <Button onClick={handleAddOption} variant="contained" sx={{ mt: 1 }}>
-                  Add Option
+                <Button onClick={handleAddChoice} variant="contained" sx={{ mt: 1 }}>
+                  Add Choice
                 </Button>
               )}
+
 
 
               {/*This is space for more question types*/}
@@ -279,12 +263,12 @@ const handleSubmitSurvey = async () => {
                 <FormLabel component="legend">{`Question ${index + 1}: ${question.text}`}</FormLabel>
                 {question.type === 'multipleChoice' ? (
                   <RadioGroup row name={`question_${index}`}>
-                    {question.options.map((option, optionIndex) => (
+                    {question.choices.map((choice, choiceIndex) => (
                       <FormControlLabel
-                        key={optionIndex}
-                        value={option}
+                        key={choiceIndex}
+                        value={choice}
                         control={<Radio />}
-                        label={option}
+                        label={choice}
                       />
                     ))}
                   </RadioGroup>
@@ -297,13 +281,13 @@ const handleSubmitSurvey = async () => {
               </FormControl>
             </Box>
           ))}
-          
+
         </>
       )}
       <Button variant="contained" onClick={handleSubmitSurvey} color="primary" sx={{ marginTop: 2 }}>
-            Submit Answers
-          </Button>
+        Submit Survey
+      </Button>
     </Box>
-    
+
   );
 }
