@@ -15,7 +15,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 //Page Imports
 import CreateSurveyPage from './CreateSurveyPage.js'; // Adjust the path based on your file structure
 import ViewSurvey from './ViewSurvey.js';
-
+import SurveyDetails from './SurveyDetails';
 
 const SettingsPage = () => <div>Settings Page</div>;
 const CreateSurvey = () => <div>Create Survey Page</div>;
@@ -137,16 +137,17 @@ function App() {
                 {/* Replace with your content */}
                 <Grid item xs={12}>
                   <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                    
-                    <Routes>
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/createSurvey" element={<CreateSurveyPage />} />
-          <Route path="/sendSurvey" element={<SendSurveyPage />} />
-          <Route path="/viewResponses" element={<ViewResponsesPage />} />
-          <Route path="/viewSurveys" element={<ViewSurvey/>} />
 
-          {/* ... other routes ... */}
-        </Routes>
+                    <Routes>
+
+                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/createSurvey" element={<CreateSurveyPage />} />
+                      <Route path="/sendSurvey" element={<SendSurveyPage />} />
+                      <Route path="/viewResponses" element={<ViewResponsesPage />} />
+                      <Route path="/viewSurveys" element={<ViewSurvey />} />
+                      <Route path="/survey/:id" element={<SurveyDetails />} />
+                      {/* ... other routes ... */}
+                    </Routes>
                   </Paper>
                 </Grid>
               </Grid>
@@ -173,7 +174,7 @@ function App() {
             </Typography>
           </Box>
         </Box>
-       
+
       </ThemeProvider>
     </BrowserRouter>
   );

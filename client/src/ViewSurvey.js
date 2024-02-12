@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardActions, Button, Typography } from '@mui/material';
+
 
 function ViewSurvey() {
   const [surveys, setSurveys] = useState([]);
@@ -11,8 +14,8 @@ function ViewSurvey() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log(data);
-      setSurveys(data.surveys);
+      console.log("Fetched data:", data); // Check what data you're receiving
+      setSurveys(data.surveys); // Make sure your backend is structured to return { surveys: [...] }
     } catch (error) {
       console.error("Error fetching surveys:", error);
     }
@@ -28,19 +31,29 @@ function ViewSurvey() {
   return (
     <div>
       <h1>Surveys</h1>
-      {surveys.length > 0 ? (
-        <ul>
-          {surveys.map((survey) => (
-            <li key={survey.id}>
-              <h2>{survey.title}</h2>
-              <p>{survey.description}</p>
-              {/* You might want to display more details here, like questions */}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No surveys found.</p>
-      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        {surveys.length > 0 ? (
+          surveys.map((survey) => (
+            <Card key={survey.id} style={{ margin: 10, width: 300 }}>
+              <CardContent>
+                <Typography variant="h5" component="h2">
+                  {survey.title}
+                </Typography>
+                <Typography color="textSecondary">
+                  {survey.description}
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button size="small" component={Link} to={`/survey/${survey.id}`}>
+                  View/Edit Survey
+                </Button>
+              </CardActions>
+            </Card>
+          ))
+        ) : (
+          <p>No surveys found.</p>
+        )}
+      </div>
     </div>
   );
 }

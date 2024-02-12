@@ -12,7 +12,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'postgres',
-  password: process.env.DB_PASSWORD, 
+  password: 'Redsfan1', 
   port: 5432,
 });
 
@@ -30,15 +30,39 @@ pool.query('SELECT NOW()', (err, res) => {
   pool.end(); // close the connection
 });
 */
-app.get('/get-surveys', async (req, res) => {
+// Adjusted to match a RESTful API pattern more closely
+app.get('/api/surveys/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM survey'); // Fetch all surveys
-    res.json({ surveys: result.rows }); // Send surveys back to the client
+    // Assuming 'id' is the column name in 'survey' table
+    const surveyResult = await pool.query('SELECT * FROM survey WHERE id = $1', [id]);
+    // Make sure the column name that refers to the survey ID in 'question' table is consistent (e.g., 'survey_id')
+    const questionsResult = await pool.query('SELECT * FROM question WHERE surveyid = $1', [id]);
+    if (surveyResult.rows.length) {
+      res.json({ survey: surveyResult.rows[0], questions: questionsResult.rows });
+    } else {
+      res.status(404).json({ message: 'Survey not found' });
+    }
   } catch (error) {
-    console.error('Error fetching surveys', error.stack);
-    res.status(500).json({ message: 'Error fetching surveys' });
+    console.error('Error fetching survey details', error.stack);
+    res.status(500).json({ message: 'Error fetching survey details' });
   }
 });
+
+
+// This endpoint remains the same, assuming 'survey_id' matches your schema
+app.get('/api/surveys/:id/questions', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('SELECT * FROM question WHERE survey_id = $1', [id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching questions for survey', error.stack);
+    res.status(500).json({ message: 'Error fetching questions' });
+  }
+});
+
+
 app.post('/create-survey', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
 
