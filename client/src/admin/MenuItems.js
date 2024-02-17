@@ -11,12 +11,12 @@ import { AuthContext } from '../components/AuthContext';
 
 
 export const menuItems = [
-  { text: 'Create Survey', icon: <CreateIcon />, route: '/createSurvey', roles: ['admin'] },
-  { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey', roles: ['admin', 'surveyor'] },
-  { text: 'View Responses', icon: <ListAltIcon />, route: '/viewResponses', roles: ['admin'] },
-  { text: 'Analyze Results', icon: <AssessmentIcon />, route: '/analyzeResults', roles: ['admin'] },
-  { text: 'View Surveys', icon: <AssessmentIcon />, route: '/viewSurveys', roles: ['admin'] },
-  { text: 'Test', icon: <AssessmentIcon />, route: '/test', roles: ['respondent'] }
+  { text: 'Create Survey', icon: <CreateIcon />, route: '/createSurvey', roles: ['Admin'] },
+  { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey', roles: ['admin', 'Surveyor'] },
+  { text: 'View Responses', icon: <ListAltIcon />, route: '/viewResponses', roles: ['Admin'] },
+  { text: 'Analyze Results', icon: <AssessmentIcon />, route: '/analyzeResults', roles: ['Admin'] },
+  { text: 'View Surveys', icon: <AssessmentIcon />, route: '/viewSurveys', roles: ['Admin'] },
+  { text: 'Test', icon: <AssessmentIcon />, route: '/test', roles: ['Respondent'] }
 ];
 
 

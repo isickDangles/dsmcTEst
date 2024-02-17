@@ -23,13 +23,13 @@ const Login = () => {
     await login(username, password);
     if (user) {
       switch (user.role) {
-        case 'admin':
+        case 'Admin':
           navigate('/admin/dashboard');
           break;
-        case 'surveyor':
+        case 'Surveyor':
           navigate('/surveyor/dashboard');
           break;
-        case 'respondent':
+        case 'Respondent':
           navigate('/respondent/view');
           break;
         default:

@@ -2,15 +2,16 @@
 import React, { useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
-import { AuthProvider, AuthContext } from './components/AuthContext'; 
+import { AuthProvider, AuthContext } from './components/AuthContext';
 import Login from './components/Login';
-import AdminDashboard from './admin/AdminDashboard'; 
-import SurveyorDashboard from './surveyor/SurveyorDashboard'; 
-import RespondentView from './respondent/RespondentView'; 
-import Layout from './components/Layout'; 
-import ProtectedRoute from './components/ProtectedRoute'; 
+import AdminDashboard from './admin/AdminDashboard';
+import SurveyorDashboard from './surveyor/SurveyorDashboard';
+import RespondentView from './respondent/RespondentView';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import SurveyCreationPage from './admin/CreateSurveyPage';
+import ViewSurvey from './surveyor/ViewSurvey';
 
 const darkTheme = createTheme({
   palette: {
@@ -19,23 +20,23 @@ const darkTheme = createTheme({
 });
 
 function RedirectToDashboard() {
-  const { user } = useContext(AuthProvider);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       switch (user.role) {
-        case 'admin':
+        case 'Admin':
           navigate('/admin/dashboard');
           break;
-        case 'surveyor':
+        case 'Surveyor':
           navigate('/surveyor/dashboard');
           break;
-        case 'respondent':
+        case 'Respondent':
           navigate('/respondent/view');
           break;
         default:
-          navigate('/login'); 
+          navigate('/login');
       }
     }
   }, [user, navigate]);
@@ -48,6 +49,7 @@ function App() {
     <AuthProvider>
       <ThemeProvider theme={darkTheme}>
         <BrowserRouter>
+      
           <Routes>
 
 
@@ -58,7 +60,7 @@ function App() {
             <Route
               path="/admin/dashboard"
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['Admin']}>
                   <Layout>        <AdminDashboard />
                   </Layout>
                 </ProtectedRoute>
@@ -67,7 +69,7 @@ function App() {
             <Route
               path="/surveyor/dashboard"
               element={
-                <ProtectedRoute roles={['surveyor']}>
+                <ProtectedRoute roles={['Surveyor']}>
                   <Layout>
                     <SurveyorDashboard />
                   </Layout>
@@ -77,9 +79,9 @@ function App() {
             <Route
               path="/respondent/view"
               element={
-                <ProtectedRoute roles={['respondent']}>
+                <ProtectedRoute roles={['Respondent']}>
                   <Layout>                  <RespondentView />
-</Layout>
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -87,8 +89,18 @@ function App() {
             <Route
               path="/createSurvey"
               element={
-                <ProtectedRoute roles={['admin']}>
+                <ProtectedRoute roles={['Admin']}>
                   <Layout>                  <SurveyCreationPage />
+                  </Layout>
+
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/viewSurveys"
+              element={
+                <ProtectedRoute roles={['Admin']}>
+                  <Layout>                  <ViewSurvey />
                   </Layout>
 
                 </ProtectedRoute>
