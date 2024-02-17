@@ -1,9 +1,10 @@
 import React from 'react';
-import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Container} from '@mui/material';
+import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Container, Button} from '@mui/material';
 import { Link } from 'react-router-dom';
 import MenuItemsComponent, { menuItems } from '../admin/MenuItems';
 import { drawerWidth } from '../admin/constants';
 import { ThemeProvider, createTheme } from '@mui/material';
+import logout from "./Logout";
 
 const darkTheme = createTheme({
     palette: {
@@ -11,7 +12,11 @@ const darkTheme = createTheme({
     },
   });
 
-  const Layout = ({ children }) => {
+ const Layout = ({ children }) => {
+    const handleLogout = async () => {
+      await logout();
+    };
+  
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <CssBaseline />
@@ -20,6 +25,8 @@ const darkTheme = createTheme({
             <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
               Survey System
             </Typography>
+            {/* Logout button */}
+            <Button color="inherit" onClick={handleLogout}>Logout</Button>
           </Toolbar>
         </AppBar>
         <Drawer
@@ -46,5 +53,4 @@ const darkTheme = createTheme({
     );
   };
   
-
-export default Layout;
+  export default Layout;

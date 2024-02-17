@@ -1,12 +1,11 @@
-
 import React, { useContext, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider, AuthContext } from './components/AuthContext';
 import Login from './components/Login';
 import AdminDashboard from './admin/AdminDashboard';
 import SurveyorDashboard from './surveyor/SurveyorDashboard';
-import RespondentView from './respondent/RespondentView';
+import RespondentDashboard from './respondent/RespondentDashboard';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -19,93 +18,51 @@ const darkTheme = createTheme({
   },
 });
 
-function RedirectToDashboard() {
-  const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user) {
-      switch (user.role) {
-        case 'Admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'Surveyor':
-          navigate('/surveyor/dashboard');
-          break;
-        case 'Respondent':
-          navigate('/respondent/view');
-          break;
-        default:
-          navigate('/login');
-      }
-    }
-  }, [user, navigate]);
-
-  return null;
-}
-
 function App() {
+  const { user } = useContext(AuthContext);
+
   return (
     <AuthProvider>
       <ThemeProvider theme={darkTheme}>
         <BrowserRouter>
-      
           <Routes>
+            {/* Redirect base route based on user authentication and role */}
+            <Route path="/" element={!user ? <Navigate to="/login" replace /> : <Navigate to={`/${user.role.toLowerCase()}/dashboard`} replace />} />
 
+            <Route path="/login" element={<Login />} />
+            
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><AdminDashboard /></Layout>
+              </ProtectedRoute>
+            }/>
+            
+            <Route path="/surveyor/dashboard" element={
+              <ProtectedRoute roles={['Surveyor']}>
+                <Layout><SurveyorDashboard /></Layout>
+              </ProtectedRoute>
+            }/>
+            
+            <Route path="/respondent/dashboard" element={
+              <ProtectedRoute roles={['Respondent']}>
+                <Layout><RespondentDashboard /></Layout>
+              </ProtectedRoute>
+            }/>
 
-            <Route
-              path="/login"
-              element={<Login />}
-            />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute roles={['Admin']}>
-                  <Layout>        <AdminDashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/surveyor/dashboard"
-              element={
-                <ProtectedRoute roles={['Surveyor']}>
-                  <Layout>
-                    <SurveyorDashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/respondent/view"
-              element={
-                <ProtectedRoute roles={['Respondent']}>
-                  <Layout>                  <RespondentView />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/createSurvey" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><SurveyCreationPage /></Layout>
+              </ProtectedRoute>
+            }/>
+            
+            <Route path="/viewSurveys" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><ViewSurvey /></Layout>
+              </ProtectedRoute>
+            }/>
 
-            <Route
-              path="/createSurvey"
-              element={
-                <ProtectedRoute roles={['Admin']}>
-                  <Layout>                  <SurveyCreationPage />
-                  </Layout>
-
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/viewSurveys"
-              element={
-                <ProtectedRoute roles={['Admin']}>
-                  <Layout>                  <ViewSurvey />
-                  </Layout>
-
-                </ProtectedRoute>
-              }
-            />
+            {/* Catch-all route to handle undefined paths */}
+            <Route path="*" element={<Navigate to={!user ? "/login" : `/${user.role.toLowerCase()}/dashboard`} replace />} />
           </Routes>
         </BrowserRouter>
       </ThemeProvider>

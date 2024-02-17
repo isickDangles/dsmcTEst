@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext'; // Adjust the path as necessary
 import { useNavigate } from 'react-router-dom';
 import Container from '@mui/material/Container';
@@ -6,21 +6,17 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import ErrorSnackbar from './ErrorMessage';
 import { CssBaseline } from '@mui/material';
-
 
 const Login = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const username = e.target.elements.username.value;
-    const password = e.target.elements.password.value;
-    await login(username, password);
+  useEffect(() => {
     if (user) {
       switch (user.role) {
         case 'Admin':
@@ -30,18 +26,32 @@ const Login = () => {
           navigate('/surveyor/dashboard');
           break;
         case 'Respondent':
-          navigate('/respondent/view');
+          navigate('/respondent/dashboard');
           break;
         default:
           navigate('/login', { replace: true });
           break;
       }
     }
+  }, [user, navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const username = e.target.elements.username.value;
+    const password = e.target.elements.password.value;
+    try {
+      await login(username, password);
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
+  const handleCloseSnackbar = () => {
+    setError('');
+  };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="sm"> {/* Adjusted maxWidth */}
       <CssBaseline />
       <Box
         sx={{
@@ -51,10 +61,10 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Typography component="h1" variant="h5">
+        <Typography component="h1" variant="h4"> {/* Increased font size */}
           Sign in
         </Typography>
-        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}> {/* Increased spacing */}
           <TextField
             variant="outlined"
             margin="normal"
@@ -85,15 +95,15 @@ const Login = () => {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3 }}
           >
             Sign In
           </Button>
         </Box>
       </Box>
+      <ErrorSnackbar open={!!error} message={error} onClose={handleCloseSnackbar} />
     </Container>
   );
 };
-
 
 export default Login;

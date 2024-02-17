@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const app = express()
 
+const saltRounds = 10; //const for hashing
+
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -43,28 +45,24 @@ app.post('/login', async (req, res) => {
     if (userQuery.rows.length > 0) {
       const user = userQuery.rows[0];
 
-      // Use bcrypt to compare the provided password with the hashed password
       const isMatch = await bcrypt.compare(password, user.password);
-      // Hash the password entered by the user
-  
-
+      
       if (isMatch) {
         const roleQuery = await pool.query(`
         SELECT r.roleName FROM "role" r
         JOIN "userRole" ur ON r.roleID = ur.roleID
         WHERE ur.userID = $1
-      `, [user.userid]); // Ensure the column name matches the actual ID column name in your table
+      `, [user.userid]); 
        
-      // Assuming we are only fetching one role for simplicity
+    
       const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].rolename : null;
-      console.log(role);
+      //console.log(role);
       const token = jwt.sign({ userId: user.userid, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
       res.json({ token, role: role });
       } else {
         res.status(401).send('Invalid credentials');
       }
     } else {
-      // User not found
       res.status(404).send('User not found');
     }
   } catch (error) {
@@ -140,7 +138,6 @@ app.post('/create-survey', async (req, res) => {
 
 app.get('/get-surveys', async (req, res) => {
   try {
-    // Fetch all questions
     const questionsResponse = await pool.query('SELECT * FROM question');
     const questions = questionsResponse.rows;
 
@@ -180,33 +177,5 @@ app.get('/get-surveys', async (req, res) => {
 
 
 
-
-async function ensureTablesExist(pool) {
-  const createSurveyTableQuery = `
-    CREATE TABLE IF NOT EXISTS survey (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      description TEXT
-    );
-  `;
-
-  const createQuestionTableQuery = `
-    CREATE TABLE IF NOT EXISTS question (
-      id SERIAL PRIMARY KEY,
-      surveyid INTEGER REFERENCES survey(id),
-      questiontext TEXT,
-      questiontype VARCHAR(50),
-      ismandatory BOOLEAN
-    );
-  `;
-
-  try {
-    await pool.query(createSurveyTableQuery);
-    await pool.query(createQuestionTableQuery);
-  } catch (error) {
-    console.error('Error ensuring tables exist', error.stack);
-    throw error;
-  }
-}
 
 app.listen(5003, () => { console.log("Server started on port 5003") })
