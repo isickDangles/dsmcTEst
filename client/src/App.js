@@ -64,7 +64,7 @@ function App() {
             } />
             <Route path="/fill-survey/:templateId" element={
               <ProtectedRoute roles={['Respondent']}>
-                <SurveyPage />
+                <Layout><SurveyPage /></Layout>
               </ProtectedRoute>
             } />
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button } from '@mui/material';
+import { TextField, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button, createTheme, ThemeProvider } from '@mui/material';
 
 const SurveyPage = () => {
   const { templateId } = useParams();
@@ -9,6 +9,11 @@ const SurveyPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
 
   useEffect(() => {
     const fetchSurveyDetails = async () => {
@@ -84,6 +89,8 @@ const SurveyPage = () => {
   }
 
   return (
+    <ThemeProvider theme={darkTheme}>
+
     <div style={{ margin: '20px' }}>
       <h1>{surveyTitle}</h1>
       <p>{surveyDescription}</p>
@@ -98,7 +105,10 @@ const SurveyPage = () => {
           Submit Survey
         </Button>
       </form>
+      
     </div>
+    </ThemeProvider>
+    
   );
 };
 

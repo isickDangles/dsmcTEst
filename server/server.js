@@ -117,20 +117,17 @@ app.post('/create-survey-template', async (req, res) => {
       );
       const questionID = questionResult.rows[0].questionid;
 
-      // Identify or insert a question type and get its ID
-      // This assumes questionType already exists; otherwise, add logic to insert it
       const questionTypeResult = await pool.query(
-        'SELECT questionTypeID FROM questionType WHERE questionType = $1',
+        'SELECT questionTypeID FROM questionType WHERE questionTypeID = $1',
+
         [question.questionType]
       );
       let questionTypeID;
       if (questionTypeResult.rows.length > 0) {
         questionTypeID = questionTypeResult.rows[0].questiontypeid;
       } else {
-        // Handle case where questionType does not exist; insert it if needed
       }
 
-      // Insert a question version linked to the question type
       const questionVersionResult = await pool.query(
         `INSERT INTO questionVersion (questionID, questionTypeID, isRequired, versionNumber)
          VALUES ($1, $2, $3, 1) RETURNING questionVersionID`,
@@ -138,13 +135,11 @@ app.post('/create-survey-template', async (req, res) => {
       );
       const questionVersionID = questionVersionResult.rows[0].questionversionid;
 
-      // Associate the question version with the survey template
       await pool.query(
         'INSERT INTO surveyQuestion (surveyTemplateID, questionVersionID) VALUES ($1, $2)',
         [surveyTemplateID, questionVersionID]
       );
 
-      // Insert choices if applicable
       if (question.choices) {
         for (const choiceText of question.choices) {
           await pool.query(
@@ -251,7 +246,7 @@ app.post('/create-survey', async (req, res) => {
       // Find the corresponding questionTypeID from the questionType description
       const questionTypeResult = await pool.query(
         'SELECT questionTypeID FROM questionType WHERE questionType = $1',
-        [question.questionType] // Assuming question.questionType is a descriptive string
+        [question.questionType] 
       );
 
       if (questionTypeResult.rows.length === 0) {
