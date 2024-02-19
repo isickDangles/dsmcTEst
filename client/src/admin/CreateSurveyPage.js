@@ -1,30 +1,47 @@
 import React, { useState } from 'react';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Radio from '@mui/material/Radio';
+import {
+  Box,
+  Button,
+  Container,
+  CssBaseline,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  ThemeProvider,
+  Typography,
+  createTheme,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Grid,
+  IconButton,
+  Paper,
+  DialogTitle,
+  Fab,
+  DialogContentText
+} from '@mui/material';
+import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import RadioGroup from '@mui/material/RadioGroup';
-import { Tooltip } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Box, CssBaseline, AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Container, Grid, Paper, BottomNavigation, BottomNavigationAction, ThemeProvider, createTheme } from '@mui/material';
-import { BrowserRouter } from 'react-router-dom';
-
+import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
 
 export default function SurveyCreationPage() {
   const [surveyName, setSurveyName] = useState('');
-  const [creatingQuestion, setCreatingQuestion] = useState(false);
-  const [questionType, setQuestionType] = useState('');
-  const [questionText, setQuestionText] = useState('');
-  const [questionChoices, setQuestionChoices] = useState(['']);
   const [questions, setQuestions] = useState([]);
-  const [surveyCreated, setSurveyCreated] = useState(false);
-  const [isSurveyComplete, setIsSurveyComplete] = useState(false);
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
+  const [currentQuestion, setCurrentQuestion] = useState({
+    text: '',
+    type: '',
+    choices: [''],
+  });
+  const [open, setOpen] = useState(false);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   const darkTheme = createTheme({
     palette: {
@@ -32,77 +49,114 @@ export default function SurveyCreationPage() {
     },
   });
 
-  const questionTypeMapping = {
-    trueFalse: 3,
-    multipleChoice: 2,
-    likertScale: 1,
-    shortAnswer: 4,
+  const handleOpenConfirmDialog = () => {
+    setOpenConfirmDialog(true);
+  };
+  
+  const handleCloseConfirmDialog = () => {
+    setOpenConfirmDialog(false);
+  };
+  
+  const handleConfirmSubmit = () => {
+    console.log("Survey submitted:", { surveyName, questions });
+    setOpenConfirmDialog(false);
+  };
+  const handleOpenDialog = () => {
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setEditingQuestionIndex(-1);
+    setCurrentQuestion({ text: '', type: '', choices: [''] }); // Reset
   };
 
   const handleSurveyNameChange = (event) => {
     setSurveyName(event.target.value);
   };
 
-  const handleDeleteQuestion = (index) => {
-    setQuestions(questions.filter((_, qIndex) => qIndex !== index));
-  };
-
-  const handleCreateSurvey = () => {
-    setSurveyCreated(true);
-  };
-
-  const handleCreateQuestionClick = () => {
-    setCreatingQuestion(true);
-  };
-
-  const handleQuestionTypeChange = (event) => {
-    console.log("QuestionType" + event.target.value)
-    setQuestionType(event.target.value);
-  };
-
-  const handleQuestionTextChange = (event) => {
-    setQuestionText(event.target.value);
-  };
-
-  const handleChoiceChange = (index, event) => {
-    const updatedChoices = questionChoices.map((choice, i) => {
-      if (i === index) {
-        return event.target.value;
-      }
-      return choice;
-    });
-    setQuestionChoices(updatedChoices);
+  const handleCurrentQuestionChange = (prop, value) => {
+    setCurrentQuestion({ ...currentQuestion, [prop]: value });
   };
 
   const handleAddChoice = () => {
-    setQuestionChoices([...questionChoices, '']);
+    setCurrentQuestion({
+      ...currentQuestion,
+      choices: [...currentQuestion.choices, ''],
+    });
   };
 
-  const handleCompleteQuestion = () => {
-    if (questionType === 'multipleChoice' && questionChoices.some(choice => choice === '')) {
-      alert('Please fill in all choices for the multiple-choice question.');
-      return;
+  const handleCancelEditing = () => {
+    setCurrentQuestion({ text: '', type: '', choices: [''] }); {
+      questions.map((question, index) => (
+        <Paper key={index} elevation={2} sx={{ p: 2, mt: 2, position: 'relative' }}>
+          <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+            Question {index + 1}
+          </Typography>
+          <Typography variant="h6" component="div" sx={{ mt: 1, mb: 1 }}>
+            {question.text}
+          </Typography>
+          <Typography variant="body2" component="div" sx={{ mb: 2 }}>
+            Type: {toFriendlyText(question.type)}
+          </Typography>
+          <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+            <IconButton onClick={() => handleEditQuestion(index)} sx={{ color: 'white' }}>
+              <EditIcon />
+            </IconButton>
+            <IconButton onClick={() => handleDeleteQuestion(index)} sx={{ color: 'white' }}>
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        </Paper>
+      ))
     }
-
-    const newQuestion = {
-      text: questionText,
-      type: questionTypeMapping[questionType], 
-      choices: questionType === 'multipleChoice' ? questionChoices.filter(choice => choice.trim() !== '') : [],
-    };
-
-    setQuestions(prevQuestions => [...prevQuestions, newQuestion]);
-    setCreatingQuestion(false);
-    setQuestionType('');
-    setQuestionText('');
-    setQuestionChoices(['']);
+    setEditingQuestionIndex(-1); 
   };
 
 
+  const handleChoiceChange = (index, event) => {
+    const newChoices = currentQuestion.choices.map((choice, i) =>
+      i === index ? event.target.value : choice
+    );
+    setCurrentQuestion({ ...currentQuestion, choices: newChoices });
+  };
+
+  const handleRemoveChoice = (index) => {
+    const newChoices = currentQuestion.choices.filter((_, i) => i !== index);
+    setCurrentQuestion({ ...currentQuestion, choices: newChoices });
+  };
+  const handleAddOrEditQuestion = () => {
+    if (editingQuestionIndex >= 0) {
+      const updatedQuestions = questions.map((question, index) =>
+        index === editingQuestionIndex ? currentQuestion : question
+      );
+      setQuestions(updatedQuestions);
+    } else {
+      setQuestions([...questions, currentQuestion]);
+    }
+    handleCloseDialog();
+  };
+
+  const handleEditQuestion = (index) => {
+    setEditingQuestionIndex(index);
+    setCurrentQuestion(questions[index]);
+    handleOpenDialog();
+  };
+
+  const handleDeleteQuestion = (index) => {
+    const updatedQuestions = questions.filter((_, qIndex) => qIndex !== index);
+    setQuestions(updatedQuestions);
+  };
+  const toFriendlyText = (text) => {
+    return text
+      .replace(/([A-Z])/g, ' $1') // insert a space before all caps
+      .replace(/^./, (str) => str.toUpperCase()); // capitalize the first letter
+  };
 
   const handleSubmitSurvey = async () => {
     const convertedQuestions = questions.map(question => ({
       text: question.text,
-      questionType: question.type, 
+      questionType: parseInt(question.type, 10),
       choices: question.choices || [],
     }));
 
@@ -113,7 +167,7 @@ export default function SurveyCreationPage() {
     };
 
     try {
-      const response = await fetch('/create-survey', {
+      const response = await fetch('/create-survey-template', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +184,6 @@ export default function SurveyCreationPage() {
       alert('Survey successfully created!');
       setSurveyName('');
       setQuestions([]);
-      setIsSurveyComplete(true);
     } catch (error) {
       console.error('Error creating survey:', error);
       alert('Failed to create survey.');
@@ -139,165 +192,154 @@ export default function SurveyCreationPage() {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <Box>
-      <Box
-        component="form"
-        sx={{ '& .MuiTextField-root': { m: 1 }, '& .MuiButton-root': { m: 1 }, maxWidth: '500px', margin: 'auto' }}
-        noValidate
-        autoComplete="off" 
-      >
-          {!surveyCreated && !isSurveyComplete && (
-            <>
+      <CssBaseline />
+      <Grid container spacing={0}>
+        <Grid item xs={1} sx={{ borderRight: '1px solid #666' }}>
+         
+        </Grid>
+        <Grid item xs={10} sx={{ minHeight: '100vh' }}>
+          <Container component="main" sx={{ mt: 4, mb: 4 }}>
+            <Typography variant="h4" gutterBottom>
+              Create Survey
+            </Typography>
+            <TextField
+              fullWidth
+              label="Survey Name"
+              variant="outlined"
+              value={surveyName}
+              onChange={handleSurveyNameChange}
+              margin="normal"
+            />
+            {
+              questions.map((question, index) => (
+                <Paper key={index} elevation={2} sx={{ p: 2, mt: 2, position: 'relative' }}>
+                  <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                    Question {index + 1}
+                  </Typography>
+                  <Typography variant="h6" component="div" sx={{ mt: 1, mb: 1 }}>
+                    {question.text}
+                  </Typography>
+                  <Typography variant="body2" component="div" sx={{ mb: 2 }}>
+                    {toFriendlyText(question.type)}
+                  </Typography>
+                  <Typography variant="body2" component="div" sx={{ mb: 2 }}>
+                    {question.required ? 'Required' : 'Not Required'}
+                  </Typography>
+                  <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+                    <IconButton onClick={() => handleEditQuestion(index)} sx={{ color: 'white' }}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDeleteQuestion(index)} sx={{ color: 'white' }}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Paper>
+              ))
+            }
+
+            {/* Inline form for adding or editing questions */}
+            <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
+              <Typography variant="h6">{editingQuestionIndex >= 0 ? `Edit Question ${editingQuestionIndex + 1}` : 'Add New Question'}</Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={currentQuestion.required || false}
+                    onChange={(e) => handleCurrentQuestionChange('required', e.target.checked)}
+                    name="required"
+                  />
+                }
+                label="Required"
+              />
               <TextField
                 fullWidth
-                id="outlined-basic"
-                label="Survey Name"
+                label="Question Text"
                 variant="outlined"
-                value={surveyName}
-                onChange={handleSurveyNameChange}
+                value={currentQuestion.text}
+                onChange={(e) => handleCurrentQuestionChange('text', e.target.value)}
+                margin="normal"
               />
-              <Button variant="contained" color="primary" onClick={handleCreateSurvey}>
-                Create Survey
-              </Button>
-            </>
-          )}
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Question Type</InputLabel>
+                <Select
+                  value={currentQuestion.type}
+                  label="Question Type"
+                  onChange={(e) => handleCurrentQuestionChange('type', e.target.value)}
+                >
+                  <MenuItem value="3">True/False</MenuItem>
+                  <MenuItem value="2">Multiple Choice</MenuItem>
+                  <MenuItem value="1">Likert Scale</MenuItem>
+                  <MenuItem value="4">Short Answer</MenuItem>
+                </Select>
+              </FormControl>
 
-          {surveyCreated && surveyName && (
-            <Box sx={{ textAlign: 'center', width: '100%' }}>
-              <h2>{surveyName}</h2>
-            </Box>
-          )}
-
-
-          {surveyCreated && (
-            <>
-              {questions.map((question, index) => (
-                <Box key={index} sx={{ marginBottom: 2, display: 'flex', alignItems: 'center' }}>
-                  <Tooltip title="Delete">
-                    <IconButton aria-label="delete" size="small" onClick={() => handleDeleteQuestion(index)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <FormControl fullWidth sx={{ mr: 2 }}>
+              {currentQuestion.type === 'multipleChoice' && (
+                currentQuestion.choices.map((choice, index) => (
+                  <Box key={index} display="flex" alignItems="center" mt={2}>
                     <TextField
-                      label={`Question ${index + 1}`}
-                      variant="outlined"
-                      value={question.text}
-                      InputProps={{ readOnly: true }}
+                      fullWidth
+                      label={`Choice ${index + 1}`}
+                      value={choice}
+                      onChange={(e) => handleChoiceChange(index, e)}
+                      sx={{ mr: 1 }}
                     />
-                  </FormControl>
-                  <Box sx={{ fontWeight: 'bold' }}>
-                    {question.type === 'trueFalse' ? 'True/False' :
-                      question.type === 'multipleChoice' ? 'Multiple Choice' :
-                        question.type === 'likertScale' ? 'Likert Scale (1-10)' :
-                          question.type === 'shortAnswer' ? 'Short Answer' :
-
-                            'Unknown Type'}
+                    <IconButton onClick={() => handleRemoveChoice(index)}>
+                      <DeleteIcon />
+                    </IconButton>
                   </Box>
-                </Box>
-              ))}
-
-              {!creatingQuestion && (
-                <Box sx={{ textAlign: 'center', width: '100%' }}>
-                  <Button variant="contained" onClick={handleCreateQuestionClick}>
-                    Add New Question
-                  </Button>
-                </Box>
+                ))
+              )}
+              {currentQuestion.type === 'multipleChoice' && (
+                <Button onClick={handleAddChoice} variant="outlined" startIcon={<AddIcon />} sx={{ mt: 2 }}>
+                  Add Choice
+                </Button>
               )}
 
-              {creatingQuestion && (
-                <Box sx={{ marginTop: 2 }}>
-                  <FormControl fullWidth>
-                    <InputLabel id="question-type-label">Question Type</InputLabel>
-                    <Select
-                      labelId="question-type-label"
-                      id="question-type-select"
-                      value={questionType}
-                      label="Question Type"
-                      onChange={handleQuestionTypeChange}
-                    >
-                      <MenuItem value="trueFalse">True/False</MenuItem>
-                      <MenuItem value="multipleChoice">Multiple Choice</MenuItem>
-                      <MenuItem value="likertScale">Likert Scale (1-7)</MenuItem>
-                      <MenuItem value="shortAnswer">Short Answer</MenuItem>
 
-                      {/* ... other question types */}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    fullWidth
-                    label={`Question ${questions.length + 1}`}
-                    variant="outlined"
-                    value={questionText}
-                    onChange={(e) => setQuestionText(e.target.value)}
-                    sx={{ marginTop: 2 }}
-                  />
-                  {
-                    questionType === 'multipleChoice' && questionChoices.map((choice, index) => (
-                      <TextField
-                        key={index}
-                        fullWidth
-                        label={`Choice ${index + 1}`}
-                        value={choice}
-                        onChange={(e) => handleChoiceChange(index, e)}
-                        margin="normal"
-                      />
-                    ))
-                  }
-                  {questionType === 'multipleChoice' && (
-                    <Button onClick={handleAddChoice} variant="contained" sx={{ mt: 1 }}>
-                      Add Choice
-                    </Button>
-                  )}
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+                <Button onClick={handleCancelEditing} color="inherit">
+                  Cancel
+                </Button>
+                <Button onClick={handleAddOrEditQuestion} color="primary" startIcon={<AddIcon />}>
+                  {editingQuestionIndex >= 0 ? 'Update Question' : 'Add Question'}
+                </Button>
+              </Box>
 
+            </Paper>
+            <Box sx={{ position: 'absolute', bottom: 16, right: 16, textAlign: 'right' }}>
+              <Button variant="contained" color="primary" onClick={handleOpenConfirmDialog}>
+                Submit Survey
+              </Button>
+            </Box>
+            <Dialog
+              open={openConfirmDialog}
+              onClose={handleCloseConfirmDialog}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">{"Submit Survey"}</DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  Are you sure you want to submit this survey?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseConfirmDialog} color="primary">
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitSurvey} color="primary" autoFocus>
+                  Confirm
+                </Button>
+              </DialogActions>
+            </Dialog>
 
+          </Container>
 
-                  {/*This is space for more question types*/}
+        </Grid>
+        <Grid item xs={1} sx={{ borderLeft: '1px solid #666' }}>
+       
+        </Grid>
+      </Grid>
 
-                  <Button onClick={handleCompleteQuestion} variant="contained" sx={{ mt: 2 }}>
-                    Save Question
-                  </Button>
-                </Box>
-              )}
-            </>
-          )}
-
-          {isSurveyComplete && (
-            <>
-              <h2>{surveyName}</h2>
-              {questions.map((question, index) => (
-                <Box key={index}>
-                  <FormControl component="fieldset" sx={{ marginTop: 2 }}>
-                    <FormLabel component="legend">{`Question ${index + 1}: ${question.text}`}</FormLabel>
-                    {question.type === 'multipleChoice' ? (
-                      <RadioGroup row name={`question_${index}`}>
-                        {question.choices.map((choice, choiceIndex) => (
-                          <FormControlLabel
-                            key={choiceIndex}
-                            value={choice}
-                            control={<Radio />}
-                            label={choice}
-                          />
-                        ))}
-                      </RadioGroup>
-                    ) : (
-                      <RadioGroup row name={`question_${index}`}>
-                        <FormControlLabel value="true" control={<Radio />} label="True" />
-                        <FormControlLabel value="false" control={<Radio />} label="False" />
-                      </RadioGroup>
-                    )}
-                  </FormControl>
-                </Box>
-              ))}
-
-            </>
-          )}
-          <Button variant="contained" onClick={handleSubmitSurvey} color="primary" sx={{ marginTop: 2 }}>
-            Submit Survey
-          </Button>
-        </Box>
-      </Box>
     </ThemeProvider>
-
   );
-}
+}  

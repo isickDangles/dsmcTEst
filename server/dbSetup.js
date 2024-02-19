@@ -11,7 +11,7 @@ const pool = new Pool({
 
 const createTables = async () => {
 
-    const queries = [
+  const queries = [
     `
   CREATE TABLE IF NOT EXISTS "user" (
   userID SERIAL PRIMARY KEY,
@@ -19,105 +19,103 @@ const createTables = async () => {
   email VARCHAR(255) UNIQUE NOT NULL, 
   password VARCHAR(255) NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "role" (
+`, `
+CREATE TABLE IF NOT EXISTS role(
   roleID SERIAL PRIMARY KEY,
   roleName VARCHAR(255) UNIQUE NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "userRole" (
+`, `
+CREATE TABLE IF NOT EXISTS userRole (
   userID INTEGER REFERENCES "user"(userID),
-  roleID INTEGER REFERENCES "role"(roleID),
+  roleID INTEGER REFERENCES role(roleID),
   PRIMARY KEY (userID, roleID)
 );
-`,`
-CREATE TABLE IF NOT EXISTS "permission" (
+`, `
+CREATE TABLE IF NOT EXISTS permission (
   permissionID SERIAL PRIMARY KEY,
   permissionName VARCHAR(255) UNIQUE NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "rolePermissions" (
-  roleID INTEGER REFERENCES "role"(roleID),
-  permissionID INTEGER REFERENCES "permission"(permissionID),
+`, `
+CREATE TABLE IF NOT EXISTS rolePermissions (
+  roleID INTEGER REFERENCES role(roleID),
+  permissionID INTEGER REFERENCES permission(permissionID),
   PRIMARY KEY (roleID, permissionID)
 );
-`,`
-CREATE TABLE IF NOT EXISTS "organization" (
+`, `
+CREATE TABLE IF NOT EXISTS organization (
   organizationID SERIAL PRIMARY KEY,
   organizationName VARCHAR(255) UNIQUE NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "project" (
+`, `
+CREATE TABLE IF NOT EXISTS project (
   projectID SERIAL PRIMARY KEY,
   projectName VARCHAR(255) NOT NULL,
-  organizationID INTEGER REFERENCES "organization"(organizationID)
+  organizationID INTEGER REFERENCES organization(organizationID)
 );
-`,`
-CREATE TABLE IF NOT EXISTS "surveyor" (
+`, `
+CREATE TABLE IF NOT EXISTS surveyor (
   userID INTEGER REFERENCES "user"(userID),
-  projectID INTEGER REFERENCES "project"(projectID),
+  projectID INTEGER REFERENCES project(projectID),
   PRIMARY KEY (userID, projectID)
 );
-`,`
-CREATE TABLE IF NOT EXISTS "surveyTemplate" (
+`, `
+CREATE TABLE IF NOT EXISTS surveyTemplate (
   surveyTemplateID SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT
 );
-`,`
-CREATE TABLE IF NOT EXISTS "survey" (
+`, `
+CREATE TABLE IF NOT EXISTS survey (
   surveyID SERIAL PRIMARY KEY,
-  surveyTemplateID INTEGER REFERENCES "surveyTemplate"(surveyTemplateID),
+  surveyTemplateID INTEGER REFERENCES surveyTemplate(surveyTemplateID),
   startDate TIMESTAMP NOT NULL,
   endDate TIMESTAMP NOT NULL,
   surveyors INTEGER REFERENCES "user"(userID)
 );
-`,`CREATE TABLE IF NOT EXISTS "questionType" (
+`, `CREATE TABLE IF NOT EXISTS questionType (
   questionTypeID SERIAL PRIMARY KEY,
   questionType VARCHAR(255) UNIQUE NOT NULL,
   description TEXT
 );
-`,`
-CREATE TABLE IF NOT EXISTS "question" (
+`, `
+CREATE TABLE IF NOT EXISTS question (
   questionID SERIAL PRIMARY KEY,
   questionText TEXT NOT NULL,
   dateCreated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-`,`
-CREATE TABLE IF NOT EXISTS "questionVersion" (
+`, `
+CREATE TABLE IF NOT EXISTS questionVersion (
   questionVersionID SERIAL PRIMARY KEY,
-  questionID INTEGER REFERENCES "question"(questionID),
-  questionTypeID INTEGER REFERENCES "questionType"(questionTypeID),
+  questionID INTEGER REFERENCES question(questionID),
+  questionTypeID INTEGER REFERENCES questionType(questionTypeID),
   isRequired BOOLEAN,
   dateModified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   versionNumber INTEGER NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "surveyQuestion" (
+`, `
+CREATE TABLE IF NOT EXISTS surveyQuestion (
   surveyQuestionID SERIAL PRIMARY KEY,
-  surveyTemplateID INTEGER REFERENCES "surveyTemplate"(surveyTemplateID),
-  questionVersionID INTEGER REFERENCES "questionVersion"(questionVersionID)
+  surveyTemplateID INTEGER REFERENCES surveyTemplate(surveyTemplateID),
+  questionVersionID INTEGER REFERENCES questionVersion(questionVersionID)
 );
-`,`
-CREATE TABLE IF NOT EXISTS "choice" (
+`, `
+CREATE TABLE IF NOT EXISTS choice (
   choiceID SERIAL PRIMARY KEY,
-  questionVersionID INTEGER REFERENCES "questionVersion"(questionVersionID),
+  questionVersionID INTEGER REFERENCES questionVersion(questionVersionID),
   choiceText TEXT NOT NULL
 );
-`,`
-CREATE TABLE IF NOT EXISTS "response" (
+`, `
+CREATE TABLE IF NOT EXISTS response (
   responseID SERIAL PRIMARY KEY,
-  questionVersionID INTEGER REFERENCES "questionVersion"(questionVersionID),
-  choiceID INTEGER REFERENCES "choice"(choiceID),
+  questionVersionID INTEGER REFERENCES questionVersion(questionVersionID),
+  choiceID INTEGER REFERENCES choice(choiceID),
   likertResponse INTEGER, 
   textResponse TEXT,
   userID INTEGER REFERENCES "user"(userID),
   responseDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 `,
-
-
-    ];
+  ];
 
   for (const query of queries) {
     try {

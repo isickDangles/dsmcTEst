@@ -16,7 +16,7 @@ export const menuItems = [
   { text: 'View Responses', icon: <ListAltIcon />, route: '/viewResponses', roles: ['Admin'] },
   { text: 'Analyze Results', icon: <AssessmentIcon />, route: '/analyzeResults', roles: ['Admin'] },
   { text: 'View Surveys', icon: <AssessmentIcon />, route: '/viewSurveys', roles: ['Admin'] },
-  { text: 'Test', icon: <AssessmentIcon />, route: '/test', roles: ['Respondent'] }
+
 ];
 
 

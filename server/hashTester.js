@@ -7,5 +7,5 @@ async function hashPassword(password) {
   return hash;
 }
 
-// Example usage
-hashPassword("admin"); // Replace "password123" with your actual passwordcc
+
+hashPassword("admin"); 

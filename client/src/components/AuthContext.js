@@ -6,16 +6,26 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
 
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            // Fetch user details or decode the token to extract user information
+            // For now, let's assume the user is authenticated
+            setUser({ username: 'user@example.com', role: 'User' });
+        }
+    }, []);
+
     const login = useCallback(async (username, password) => {
         try {
             const response = await axios.post('http://localhost:3000/login', { username, password });
             const { token, role } = response.data;
             localStorage.setItem('token', token);
+            localStorage.setItem('role', role); // Store the user's role in local storage
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             setUser({ username, role }); 
         } catch (error) {
-            
-            throw new Error('Invalid credentials'); 
+            throw new Error('Invalid credentials');
         }
     }, []);
     
@@ -26,21 +36,12 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            // Optionally verify the token with your backend here and fetch user details
-            // For now, we'll just assume the user is authenticated if a token is present
-           
-        }
-    }, []);
-
     return (
         <AuthContext.Provider value={{ user, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
 };
+
 
 export const useAuth = () => useContext(AuthContext);

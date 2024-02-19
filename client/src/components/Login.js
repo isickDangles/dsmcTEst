@@ -29,7 +29,7 @@ const Login = () => {
           navigate('/respondent/dashboard');
           break;
         default:
-          navigate('/login', { replace: true });
+          navigate('/login');
           break;
       }
     }

@@ -14,7 +14,7 @@ const createTables = async () => {
     
 //Adding roles
 `
-INSERT INTO "role" (roleName) VALUES
+INSERT INTO role (roleName) VALUES
 ('Admin'),
 ('Surveyor'),
 ('Respondent');
@@ -23,7 +23,7 @@ INSERT INTO "role" (roleName) VALUES
 
 `
 
-INSERT INTO "permission" (permissionName) VALUES
+INSERT INTO permission (permissionName) VALUES
 ('CREATE_SURVEY'),
 ('EDIT_SURVEY'),
 ('DELETE_SURVEY'),
@@ -36,7 +36,7 @@ INSERT INTO "permission" (permissionName) VALUES
 `,
 //Adding Administrator roles
 `
-INSERT INTO "rolePermissions" (roleID, permissionID) VALUES
+INSERT INTO rolePermissions (roleID, permissionID) VALUES
 (1, 1), 
 (1, 2), 
 (1, 3), 
@@ -45,27 +45,34 @@ INSERT INTO "rolePermissions" (roleID, permissionID) VALUES
 `,
 //Adding Sureveyor roles
 `
-INSERT INTO "rolePermissions" (roleID, permissionID) VALUES
+INSERT INTO rolePermissions (roleID, permissionID) VALUES
 (2, 6), 
 (2, 7); 
 `,
 //Adding respondent roles
 `
-INSERT INTO "rolePermissions" (roleID, permissionID) VALUES
+INSERT INTO rolePermissions (roleID, permissionID) VALUES
 (3, 8), 
 (3, 9); 
 `,`
 
 INSERT INTO "user" (username, email, password) VALUES
-('Admin', 'admin@example.com', '$2y$10$LXmkyVS2cpvCggu/mKcUtOYpooJdW8Inxn2sR/ZUpZ6ToecYjLQNu'),
-('Surveyor', 'surveyor@example.com', '$2y$10$wwR1wdvRH6VuvDPGyBJpOe2LvqnOE6j.p1PxmzCxM4RDykKqsvHga'),
-('Respondent', 'respondent@example.com', '$2y$10$0EfqjYGLPJiogUFN3HauXuP8GTyWrbMRW8yMyCQtTPcXli1YPlTO.');
+('Admin', 'admin@example.com', '$2b$10$Si3Ryo32psoIe2ES/LhYEeXaIDE8tc6yjAEtZDx3bFNdSqUI7odju'),
+('Surveyor', 'surveyor@example.com', '$2b$10$ZcMT7a0ukOX4Pn.KQpYhIeQrE66/S2h8LJxIJGI8kaIm8cyCF7SBq'),
+('Respondent', 'respondent@example.com', '$2b$10$zcFWoRmEPUkD07ksq.ST0.G6CJLPOZUkMn6/a/Nqrvca6kU3aIcke');
 `,`
 
-INSERT INTO "userRole" (userID, roleID) VALUES
+INSERT INTO userRole (userID, roleID) VALUES
 (1, 1),
 (2, 2), 
 (3, 3); 
+`,`
+INSERT INTO questionType (questionTypeID, questionType, description) VALUES 
+(1, 'Likert Scale', '7 point Likert Scale'), 
+(2, 'Multiple Choice', '3 or more choices'), 
+(3, 'True or False', 'Boolean type'), 
+(4, 'Short Answer', 'Short text answer')
+
 `
 
     ];
