@@ -55,7 +55,7 @@ const SurveyPage = () => {
             </RadioGroup>
           </FormControl>
         );
-      case 'True/False':
+      case 'True or False':
         return (
           <FormControl component="fieldset">
             <FormLabel component="legend">{question.questionText}</FormLabel>
