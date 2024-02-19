@@ -41,21 +41,23 @@ const SurveyPage = () => {
   }, [templateId]);
 
   const renderQuestion = (question) => {
+    const choices = question.choices || []; 
+
     switch (question.questiontype) {
       case 'Short Answer':
         return <TextField label="Your Answer" variant="outlined" fullWidth />;
-      case 'Multiple Choice':
-        return (
-          <FormControl component="fieldset">
-            <FormLabel component="legend">{question.questionText}</FormLabel>
-            <RadioGroup>
-              {question.choices.map((choice, index) => (
-                <FormControlLabel key={index} value={choice} control={<Radio />} label={choice} />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        );
-      case 'True/False':
+        case 'Multiple Choice':
+          return (
+            <FormControl component="fieldset">
+              <FormLabel component="legend">{question.questionText}</FormLabel>
+              <RadioGroup>
+                {choices.map((choice, index) => (
+                  <FormControlLabel key={index} value={choice} control={<Radio />} label={choice} />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          );
+      case 'True or False':
         return (
           <FormControl component="fieldset">
             <FormLabel component="legend">{question.questionText}</FormLabel>

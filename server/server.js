@@ -53,45 +53,50 @@ app.post('/login', async (req, res) => {
     res.status(500).send('Server error during login');
   }
 });
-
 app.get('/api/survey-details/:templateId', async (req, res) => {
   const { templateId } = req.params;
 
   try {
-    const surveyTemplateQuery = `
-      SELECT st.title, st.description, q.questionText, qv.versionNumber, qv.isRequired, qt.questionType
+    const surveyDetailsQuery = `
+      SELECT st.surveyTemplateID, st.title, st.description, q.questionID, q.questionText, 
+             qv.versionNumber, qv.isRequired, qt.questionType, qv.questionVersionID
       FROM surveyTemplate st
-      LEFT JOIN surveyQuestion sq ON st.surveyTemplateID = sq.surveyTemplateID
-      LEFT JOIN questionVersion qv ON sq.questionVersionID = qv.questionVersionID
-      LEFT JOIN question q ON qv.questionID = q.questionID
-      LEFT JOIN questionType qt ON qv.questionTypeID = qt.questionTypeID
+      JOIN surveyQuestion sq ON st.surveyTemplateID = sq.surveyTemplateID
+      JOIN questionVersion qv ON sq.questionVersionID = qv.questionVersionID
+      JOIN question q ON qv.questionID = q.questionID
+      JOIN questionType qt ON qv.questionTypeID = qt.questionTypeID
       WHERE st.surveyTemplateID = $1;
     `;
 
-    const { rows } = await pool.query(surveyTemplateQuery, [templateId]);
+    const surveyDetailsResult = await pool.query(surveyDetailsQuery, [templateId]);
 
-    if (rows.length === 0) {
+    if (surveyDetailsResult.rows.length === 0) {
       return res.status(404).json({ message: "Survey template not found" });
     }
 
-    // Assuming you might also want to fetch choices for questions if applicable
-    for (const row of rows) {
-      if (['Multiple Choice', 'Likert Scale'].includes(row.questionType)) {
-        const choicesQuery = `
-          SELECT c.choiceText
-          FROM choice c
-          JOIN questionVersion qv ON c.questionVersionID = qv.questionVersionID
-          WHERE qv.questionID = $1;
-        `;
-        const choicesResult = await pool.query(choicesQuery, [row.questionID]);
-        row.choices = choicesResult.rows.map(row => row.choiceText);
-      }
+    // Initialize an array to hold the survey details including choices
+    const surveyDetails = [];
+
+    // Loop over each question to set the choices
+    for (const question of surveyDetailsResult.rows) {
+      const choicesQuery = `
+        SELECT choicetext
+        FROM choice
+        WHERE questionversionid = $1 
+      `;
+      const choicesResult = await pool.query(choicesQuery, [question.questionversionid]);
+      
+      // Push the question along with its choices into the surveyDetails array
+      surveyDetails.push({
+        ...question,
+        choices: choicesResult.rows.map(choiceRow => choiceRow.choicetext) // Ensure this is the correct column name
+      });
     }
 
-    res.json(rows);
+    res.json(surveyDetails);
   } catch (error) {
     console.error('Failed to fetch survey details:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -246,7 +251,7 @@ app.post('/create-survey', async (req, res) => {
       // Find the corresponding questionTypeID from the questionType description
       const questionTypeResult = await pool.query(
         'SELECT questionTypeID FROM questionType WHERE questionType = $1',
-        [question.questionType] 
+        [question.questionType]
       );
 
       if (questionTypeResult.rows.length === 0) {

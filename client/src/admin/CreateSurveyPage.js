@@ -23,6 +23,7 @@ import {
   Fab,
   DialogContentText
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import AddIcon from '@mui/icons-material/Add';
@@ -154,6 +155,7 @@ export default function SurveyCreationPage() {
   };
 
   const handleSubmitSurvey = async () => {
+    handleCloseConfirmDialog();
     const convertedQuestions = questions.map(question => ({
       text: question.text,
       questionType: parseInt(question.type, 10),
@@ -181,12 +183,10 @@ export default function SurveyCreationPage() {
 
       const result = await response.json();
       console.log('Survey created:', result);
-      alert('Survey successfully created!');
       setSurveyName('');
       setQuestions([]);
     } catch (error) {
       console.error('Error creating survey:', error);
-      alert('Failed to create survey.');
     }
   };
 
@@ -272,7 +272,7 @@ export default function SurveyCreationPage() {
                 </Select>
               </FormControl>
 
-              {currentQuestion.type === 'multipleChoice' && (
+              {currentQuestion.type === '2' && (
                 currentQuestion.choices.map((choice, index) => (
                   <Box key={index} display="flex" alignItems="center" mt={2}>
                     <TextField
@@ -288,7 +288,7 @@ export default function SurveyCreationPage() {
                   </Box>
                 ))
               )}
-              {currentQuestion.type === 'multipleChoice' && (
+              {currentQuestion.type === '2' && (
                 <Button onClick={handleAddChoice} variant="outlined" startIcon={<AddIcon />} sx={{ mt: 2 }}>
                   Add Choice
                 </Button>
@@ -299,8 +299,8 @@ export default function SurveyCreationPage() {
                 <Button onClick={handleCancelEditing} color="inherit">
                   Cancel
                 </Button>
-                <Button onClick={handleAddOrEditQuestion} color="primary" startIcon={<AddIcon />}>
-                  {editingQuestionIndex >= 0 ? 'Update Question' : 'Add Question'}
+                <Button onClick={handleAddOrEditQuestion} color="primary" startIcon={<CheckIcon />}>
+                  {editingQuestionIndex >= 0 ? 'Update Question' : 'Complete Question'}
                 </Button>
               </Box>
 
