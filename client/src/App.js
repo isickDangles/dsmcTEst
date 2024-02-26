@@ -10,8 +10,15 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import SurveyCreationPage from './admin/CreateSurveyPage';
-import ViewSurvey from './surveyor/ViewSurvey';
+import SurveyHistory from './surveyor/SurveyHistory';
 import SurveyPage from './respondent/SurveyPage';
+import SendSurvey from './surveyor/SendSurvey';
+import AdminTools from './admin/AdminTools';
+import AnalyzeResults from './admin/AnalyzeResults'
+import ViewResults from './admin/ViewResults'
+import ManageSurvey from './admin/ManageSurvey'
+import Notification from './surveyor/Notification'
+
 
 const darkTheme = createTheme({
   palette: {
@@ -27,7 +34,6 @@ function App() {
       <ThemeProvider theme={darkTheme}>
         <BrowserRouter>
           <Routes>
-
 
             <Route path="/login" element={<Login />} />
 
@@ -55,13 +61,53 @@ function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="/viewSurveys" element={
+            <Route path="/manageSurvey" element={
               <ProtectedRoute roles={['Admin']}>
-                <Layout><ViewSurvey /></Layout>
-
-
+                <Layout><ManageSurvey /></Layout>
               </ProtectedRoute>
             } />
+
+            <Route path="/surveyHistory" element={
+              <ProtectedRoute roles={['Admin', 'Surveyor']}>
+                <Layout><SurveyHistory /></Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/adminTools" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><AdminTools /></Layout>
+              </ProtectedRoute>
+            } />
+
+
+            <Route path="/sendSurvey" element={
+              <ProtectedRoute roles={['Surveyor']}>
+                <Layout><SendSurvey /></Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/analyzeResults" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><AnalyzeResults /></Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/viewResults" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><ViewResults /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/survey" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><SurveyPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/sendNotification" element={
+              <ProtectedRoute roles={['Surveyor']}>
+                <Layout><Notification /></Layout>
+              </ProtectedRoute>
+            } />
+
             <Route path="/fill-survey/:templateId" element={
               <ProtectedRoute roles={['Respondent']}>
                 <Layout><SurveyPage /></Layout>

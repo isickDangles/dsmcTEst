@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardActions, Button, Typography } from '@mui/material';
 
 
-function ViewSurvey() {
+function SurveyHistory() {
   const [surveys, setSurveys] = useState([]);
   const [activeSurveyId, setActiveSurveyId] = useState(null); 
 
@@ -57,4 +57,4 @@ function ViewSurvey() {
   );
 }
 
-export default ViewSurvey;
+export default SurveyHistory;

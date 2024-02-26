@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
 
 export const AuthContext = createContext();
 
@@ -9,10 +11,9 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
+            const decoded = jwtDecode(token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            // Fetch user details or decode the token to extract user information
-            // For now, let's assume the user is authenticated
-            setUser({ username: 'user@example.com', role: 'User' });
+            setUser({ username: decoded.username, role: decoded.role });
         }
     }, []);
 
@@ -23,12 +24,12 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', token);
             localStorage.setItem('role', role); // Store the user's role in local storage
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            setUser({ username, role }); 
+            setUser({ username, role });
         } catch (error) {
             throw new Error('Invalid credentials');
         }
     }, []);
-    
+
 
     const logout = useCallback(() => {
         localStorage.removeItem('token');

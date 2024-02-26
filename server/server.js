@@ -39,7 +39,7 @@ app.post('/login', async (req, res) => {
 
 
         const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].rolename : null;
-        //console.log(role);
+        
         const token = jwt.sign({ userId: user.userid, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
         res.json({ token, role: role });
       } else {
