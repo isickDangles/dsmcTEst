@@ -1,211 +1,280 @@
-
+require('dotenv').config()
 const express = require('express')
 const { Pool } = require('pg')
-
 const dotenv = require('dotenv');
-dotenv.config();
-
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const app = express()
 
+const saltRounds = 10; //const for hashing
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'postgres',
-  password: 'Redsfan1', 
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
-
 
 app.use(express.json());
 
-// To query the database
-/*
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-      console.error(err);
-      return;
-  }
-  console.log('Connection successful, current time:', res.rows[0].now);
-  pool.end(); // close the connection
-});
-*/
-// Adjusted to match a RESTful API pattern more closely
-app.get('/api/surveys/:id', async (req, res) => {
-  const { id } = req.params;
+
+
+// Login route
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
   try {
-    // Assuming 'id' is the column name in 'survey' table
-    const surveyResult = await pool.query('SELECT * FROM survey WHERE id = $1', [id]);
-    // Make sure the column name that refers to the survey ID in 'question' table is consistent (e.g., 'survey_id')
-    const questionsResult = await pool.query('SELECT * FROM question WHERE surveyid = $1', [id]);
-    if (surveyResult.rows.length) {
-      res.json({ survey: surveyResult.rows[0], questions: questionsResult.rows });
+    const userQuery = await pool.query('SELECT * FROM "users" WHERE username = $1', [username]);
+    if (userQuery.rows.length > 0) {
+      const user = userQuery.rows[0];
+
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (isMatch) {
+        const roleQuery = await pool.query(`
+        SELECT r.name FROM roles r
+        JOIN user_roles ur ON r.id = ur.role_id
+        WHERE ur.user_id = $1
+      `, [user.id]);
+
+        const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].name : null;
+
+        const token = jwt.sign({ userId: user.id, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
+        res.json({ token, role: role });
+      } else {
+        res.status(401).send('Invalid credentials');
+      }
     } else {
-      res.status(404).json({ message: 'Survey not found' });
+      res.status(404).send('User not found');
     }
   } catch (error) {
-    console.error('Error fetching survey details', error.stack);
-    res.status(500).json({ message: 'Error fetching survey details' });
+    console.error(error);
+    res.status(500).send('Server error during login');
   }
 });
 
 
-// This endpoint remains the same, assuming 'survey_id' matches your schema
-app.get('/api/surveys/:id/questions', async (req, res) => {
-  const { id } = req.params;
+app.get('/api/survey-details/:templateId', async (req, res) => {
+  const { templateId } = req.params;
+
   try {
-    const result = await pool.query('SELECT * FROM question WHERE survey_id = $1', [id]);
-    res.json(result.rows);
+    // Updated query without question_versions
+    const surveyDetailsQuery = `
+      SELECT st.id AS surveyTemplateID, st.name AS title, st.description, q.id AS questionID, q.question, 
+             q.is_required, qt.name AS questionType
+      FROM survey_templates st
+      JOIN survey_template_questions sq ON st.id = sq.survey_template_id
+      JOIN questions q ON sq.question_id = q.id
+      JOIN question_types qt ON q.question_type_id = qt.id
+      WHERE st.id = $1;
+    `;
+
+    const surveyDetailsResult = await pool.query(surveyDetailsQuery, [templateId]);
+
+    if (surveyDetailsResult.rows.length === 0) {
+      return res.status(404).json({ message: "Survey template not found" });
+    }
+
+    const surveyDetails = [];
+
+    for (const question of surveyDetailsResult.rows) {
+      const choicesQuery = `
+        SELECT choice_text
+        FROM choices
+        WHERE question_id = $1;
+      `;
+      const choicesResult = await pool.query(choicesQuery, [question.questionid]);
+      
+      surveyDetails.push({
+        ...question,
+        choices: choicesResult.rows.map(choiceRow => choiceRow.choice_text)
+      });
+    }
+
+    res.json(surveyDetails);
   } catch (error) {
-    console.error('Error fetching questions for survey', error.stack);
-    res.status(500).json({ message: 'Error fetching questions' });
+    console.error('Failed to fetch survey details:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
 
-app.post('/create-survey', async (req, res) => {
+app.post('/create-survey-template', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
 
   try {
-    await ensureTablesExist(pool);
-    await pool.query('BEGIN'); // Start a transaction
+    await pool.query('BEGIN');
 
-    // Insert the survey and get its ID
-    const surveyResult = await pool.query(
-      'INSERT INTO survey (title, description) VALUES ($1, $2) RETURNING id',
+    // Create a survey template
+    const surveyTemplateResult = await pool.query(
+      'INSERT INTO survey_templates (name, description) VALUES ($1, $2) RETURNING id',
       [surveyTitle, surveyDescription]
     );
-    const surveyId = surveyResult.rows[0].id;
+    const surveyTemplateID = surveyTemplateResult.rows[0].id;
 
-    // Prepare the question insertion query
-    const questionInsertQuery = `
-      INSERT INTO question (surveyid, questiontype, questiontext, ismandatory)
-      VALUES ($1, $2, $3, $4) RETURNING id
-    `;
-      
-    // Insert each question and its choices if applicable
     for (const question of questions) {
-      // Insert the question and get its ID
-      const questionResult = await pool.query(questionInsertQuery, [
-        surveyId,
-        question.questionType, // Already a numeric ID, no conversion needed
-        question.text,
-        question.isRequired ?? false,
-      ]);
-      const questionId = questionResult.rows[0].id;
+      // Insert the question
+      const questionResult = await pool.query(
+        'INSERT INTO questions (question, question_type_id) VALUES ($1, $2) RETURNING id',
+        [question.text, question.questionType]
+      );
+      const questionID = questionResult.rows[0].id;
 
-      // If the question is a multiple-choice type, insert its choices
-      if (question.questionType === 2 && question.choices) { // Assuming 2 is the ID for Multiple Choice
-        const choiceInsertQuery = `
-          INSERT INTO choice (questionid, choicetext)
-          VALUES ($1, $2)
-        `;
+      // Link the question to the survey template
+      await pool.query(
+        'INSERT INTO survey_template_questions (survey_template_id, question_id) VALUES ($1, $2)',
+        [surveyTemplateID, questionID]
+      );
+
+      if (question.choices) {
         for (const choiceText of question.choices) {
-          await pool.query(choiceInsertQuery, [questionId, choiceText]);
+          // Insert choices for the question
+          await pool.query(
+            'INSERT INTO choices (question_id, choice_text) VALUES ($1, $2)',
+            [questionID, choiceText]
+          );
         }
       }
     }
 
-    await pool.query('COMMIT'); // Commit the transaction
-    res.status(201).json({ message: 'Survey created successfully!', surveyId: surveyId });
+    await pool.query('COMMIT');
+    res.status(201).json({ message: 'Survey template created successfully!', surveyTemplateID: surveyTemplateID });
   } catch (error) {
-    await pool.query('ROLLBACK'); // Rollback the transaction on error
-    console.error('Error creating survey', error.stack);
-    res.status(500).json({ message: 'Error creating survey' });
+    await pool.query('ROLLBACK');
+    console.error('Error creating survey template', error.stack);
+    res.status(500).json({ message: 'Error creating survey template' });
   }
 });
 
 
+// Survey template route
+app.get('/api/survey-template/:templateId', async (req, res) => {
+  const { templateId } = req.params;
 
-
-app.get('/get-surveys', async (req, res) => {
   try {
-    // Fetch all questions
-    const questionsResponse = await pool.query('SELECT * FROM question');
-    const questions = questionsResponse.rows;
+    await pool.query('BEGIN');
 
-    // Initialize an object to hold surveys indexed by their ID for quick lookup
-    const surveysIndex = {};
+    const surveyTemplateQuery = `
+      SELECT name, description
+      FROM survey_templates
+      WHERE id = $1;
+    `;
+    const surveyTemplateResult = await pool.query(surveyTemplateQuery, [templateId]);
 
-    // Go through each question, organizing them by surveyID
-    questions.forEach(question => {
-      const surveyId = question.surveyid;
-      // If we haven't seen this surveyId yet, initialize it in our index
-      if (!surveysIndex[surveyId]) {
-        surveysIndex[surveyId] = {
-          questions: []
-        };
+    if (surveyTemplateResult.rows.length === 0) {
+      res.status(404).json({ message: 'Survey template not found' });
+      return;
+    }
+
+    const surveyTemplate = surveyTemplateResult.rows[0];
+
+    const questionsQuery = `
+      SELECT q.id AS questionID, q.question, qt.name AS questionType, qv.is_required, qv.version_number
+      FROM survey_template_questions sq
+      JOIN question_versions qv ON sq.question_version_id = qv.id
+      JOIN questions q ON qv.question_id = q.id
+      JOIN question_types qt ON qv.question_type_id = qt.id
+      WHERE sq.survey_template_id = $1;
+    `;
+    const questionsResult = await pool.query(questionsQuery, [templateId]);
+
+    // Enhance questions with choices if necessary
+    for (let question of questionsResult.rows) {
+      if (['Multiple Choice', 'Likert Scale'].includes(question.questiontype)) {
+        const choicesQuery = `
+          SELECT choice_text
+          FROM choices
+          WHERE question_version_id = $1;
+        `;
+        const choicesResult = await pool.query(choicesQuery, [question.questionid]);
+        question.choices = choicesResult.rows;
+      } else {
+        question.choices = []; // Ensure all questions have a choices key for consistency
       }
-      // Append the question to the correct survey in the index
-      surveysIndex[surveyId].questions.push(question);
+    }
+
+    await pool.query('COMMIT');
+
+    res.json({
+      id: templateId,
+      name: surveyTemplate.name,
+      description: surveyTemplate.description,
+      questions: questionsResult.rows
     });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error fetching survey template:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
-    // Now, fetch the survey details and fill them in the surveysIndex
-    const surveysResponse = await pool.query('SELECT * FROM survey');
-    const surveys = surveysResponse.rows;
+// Surveys route
+app.get('/api/surveys', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id AS surveyTemplateID, name AS title, description FROM survey_templates');
+    res.json(rows);
+  } catch (error) {
+    console.error('Failed to fetch surveys:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
-    // Populate the surveysIndex with survey details
-    surveys.forEach(survey => {
-      if (surveysIndex[survey.id]) {
-        surveysIndex[survey.id] = { ...survey, ...surveysIndex[survey.id] };
+
+
+// Route to fetch all saved questions
+app.get('/api/saved-questions', async (req, res) => {
+  try {
+    const savedQuestionsQuery = `SELECT * FROM questions WHERE is_saved = true;`;
+    const { rows } = await pool.query(savedQuestionsQuery);
+    res.json(rows);
+  } catch (error) {
+    console.error('Failed to fetch saved questions:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Route to save a question to the question bank
+app.post('/api/save-question', async (req, res) => {
+  
+
+  const { questionText, questionTypeId, choices, isRequired } = req.body;
+
+  // Log the received data
+  console.log('Received data:', { questionText, questionTypeId, choices, isRequired });
+
+  try {
+    await pool.query('BEGIN');
+
+    const insertQuestionQuery = `
+      INSERT INTO questions (question, question_type_id, is_saved, is_required)
+      VALUES ($1, $2, true, $3)
+      RETURNING id;
+    `;
+    // Include isRequired in the parameter array for the query
+    const questionResult = await pool.query(insertQuestionQuery, [questionText, questionTypeId, isRequired]);
+    const questionID = questionResult.rows[0].id;
+
+    // If there are choices, insert them too
+    if (choices) {
+      for (const choiceText of choices) {
+        const insertChoiceQuery = `
+          INSERT INTO choices (question_id, choice_text)
+          VALUES ($1, $2);
+        `;
+        await pool.query(insertChoiceQuery, [questionID, choiceText]);
       }
-    });
+    }
 
-    // Convert the surveysIndex object back into an array
-    const surveysWithQuestions = Object.values(surveysIndex);
-
-    res.json({ surveys: surveysWithQuestions });
+    await pool.query('COMMIT');
+    res.status(201).json({ message: 'Question saved successfully!' });
   } catch (error) {
-    console.error('Error fetching surveys with questions:', error);
-    res.status(500).json({ message: 'Error fetching surveys' });
+    await pool.query('ROLLBACK');
+    console.error('Error saving question:', error);
+    res.status(500).json({ message: 'Error saving question' });
   }
 });
 
 
-/*
-app.get('/', async (req, res) => {
-  try {
-      const queryRes = await pool.query('SELECT NOW()');
-      res.send(`Current time: ${queryRes.rows[0].now}`);
-  } catch (err) {
-      console.error(err);
-      res.send('Error occurred');
-  }
-});
-*/
 
-
-//app.get("/api", (req, res) => {
-//    console.log("Received request:", req.path);
-//    res.json({ "users": ["userOne", "userTwo", "userThree", "userFour"] });
-//});
-
-async function ensureTablesExist(pool) {
-  const createSurveyTableQuery = `
-    CREATE TABLE IF NOT EXISTS survey (
-      id SERIAL PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      description TEXT
-    );
-  `;
-
-  const createQuestionTableQuery = `
-    CREATE TABLE IF NOT EXISTS question (
-      id SERIAL PRIMARY KEY,
-      surveyid INTEGER REFERENCES survey(id),
-      questiontext TEXT,
-      questiontype VARCHAR(50),
-      ismandatory BOOLEAN
-    );
-  `;
-
-  try {
-    await pool.query(createSurveyTableQuery);
-    await pool.query(createQuestionTableQuery);
-  } catch (error) {
-    console.error('Error ensuring tables exist', error.stack);
-    throw error; // Rethrow the error to handle it in the calling function
-  }
-}
 
 app.listen(5003, () => { console.log("Server started on port 5003") })
