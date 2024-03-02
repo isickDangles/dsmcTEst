@@ -58,10 +58,9 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
   const { templateId } = req.params;
 
   try {
-    // Updated query without question_versions
     const surveyDetailsQuery = `
       SELECT st.id AS surveyTemplateID, st.name AS title, st.description, q.id AS questionID, q.question, 
-             q.is_required, qt.name AS questionType
+      q.is_required, qt.name AS questionType
       FROM survey_templates st
       JOIN survey_template_questions sq ON st.id = sq.survey_template_id
       JOIN questions q ON sq.question_id = q.id
@@ -83,7 +82,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
         FROM choices
         WHERE question_id = $1;
       `;
-      const choicesResult = await pool.query(choicesQuery, [question.questionid]);
+      const choicesResult = await pool.query(choicesQuery, [question.questionID]); // Corrected to questionID
       
       surveyDetails.push({
         ...question,
@@ -97,6 +96,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
 
 
 app.post('/create-survey-template', async (req, res) => {
@@ -237,7 +237,6 @@ app.get('/api/saved-questions', async (req, res) => {
 app.post('/api/save-question', async (req, res) => {
   
 
-  const { questionText, questionTypeId, choices, isRequired } = req.body;
 
   // Log the received data
   console.log('Received data:', { questionText, questionTypeId, choices, isRequired });

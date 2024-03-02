@@ -21,8 +21,8 @@ export const menuItems = [
   { text: 'Create Survey', icon: <CreateIcon />, route: '/createSurvey', roles: ['Admin'] },
   { text: 'Manage Survey', icon: <AdminPanelSettingsIcon />, route: '/manageSurvey', roles: ['Admin'] },
   { text: 'Survey History', icon: <HistoryIcon />, route: '/surveyHistory', roles: ['Admin', 'Surveyor'] },
-  { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey', roles: [ 'Surveyor'] },
-  { text: 'View Results', icon: <ListAltIcon />, route: '/viewResults', roles: ['Admin'] },
+  { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey', roles: [ 'Surveyor'] },  //chase did
+  { text: 'View Results', icon: <ListAltIcon />, route: '/viewResults', roles: ['Admin'] }, 
   { text: 'Analyze Results', icon: <BarChartIcon />, route: '/analyzeResults', roles: ['Admin'] },
   { text: 'Send Notifications', icon: <NotificationsIcon />, route: '/sendNotification', roles: ['Surveyor'] },
   { text: 'Survey', icon: <PollIcon />, route: '/survey', roles: ['Respondent'] },
@@ -34,7 +34,6 @@ export const menuItems = [
 const MenuItemsComponent = () => {
   const { user } = useContext(AuthContext);
 
-  // Filter menu items based on user role
   const visibleMenuItems = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
