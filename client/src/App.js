@@ -115,10 +115,11 @@ function App() {
             } />
 
             <Route path="/preview-survey/:templateId" element={
-              <ProtectedRoute roles={['Surveyor']}>
+              <ProtectedRoute roles={['Surveyor','Admin']}>
                 <Layout><PreviewSurvey /></Layout>
               </ProtectedRoute>
             } />
+
 
             {/* Catch-all route to handle undefined paths */}
             <Route path="*" element={<Navigate to={!user ? "/login" : `/${user.role.toLowerCase()}/dashboard`} replace />} />

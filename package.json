@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@mui/icons-material": "^5.15.11",
     "jwt-decode": "^4.0.0"
   }
 }
