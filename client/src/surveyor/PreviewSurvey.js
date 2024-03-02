@@ -9,7 +9,7 @@ import {
   Typography,
   CssBaseline,
   Card,
-  CardContent,  
+  CardContent,
   Box,
   Radio,
   RadioGroup,
@@ -17,13 +17,14 @@ import {
   FormControl,
 } from '@mui/material';
 
-const SurveyPage = () => {
+const PreviewSurvey = () => {
   const { templateId } = useParams();
   const [surveyTitle, setSurveyTitle] = useState('');
   const [surveyDescription, setSurveyDescription] = useState('');
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
 
   const darkTheme = createTheme({
     palette: {
@@ -132,4 +133,4 @@ const SurveyPage = () => {
   );
 };
 
-export default SurveyPage;
+export default PreviewSurvey;

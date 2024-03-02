@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../components/AuthContext';
 
-const RespondentDashboard = () => {
+  const RespondentDashboard = () => {
   const { user } = useContext(AuthContext);
   const [surveys, setSurveys] = useState([]);
   const navigate = useNavigate();
