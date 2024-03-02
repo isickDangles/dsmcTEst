@@ -114,7 +114,6 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Catch-all route to handle undefined paths */}
             <Route path="*" element={<Navigate to={!user ? "/login" : `/${user.role.toLowerCase()}/dashboard`} replace />} />
           </Routes>
         </BrowserRouter>
