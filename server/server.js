@@ -237,7 +237,6 @@ app.get('/api/saved-questions', async (req, res) => {
 app.post('/api/save-question', async (req, res) => {
   
 
-  const { questionText, questionTypeId, choices, isRequired } = req.body;
 
   // Log the received data
   console.log('Received data:', { questionText, questionTypeId, choices, isRequired });

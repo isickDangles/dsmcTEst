@@ -29,19 +29,30 @@ export const menuItems = [
   { text: 'Admin Tools', icon: <BuildIcon />, route: '/adminTools', roles: ['Admin'] },
 
 ];
-
-
 const MenuItemsComponent = () => {
   const { user } = useContext(AuthContext);
-
-  // Filter menu items based on user role
+  const backgroundImageUrl = '/static/images/buttons/breakfast.jpg'; // Confirm this is the correct path
   const visibleMenuItems = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
     <div>
       {visibleMenuItems.map((item, index) => (
-        <ListItem button key={item.text} component={Link} to={item.route}>
-          <ListItemIcon>{item.icon}</ListItemIcon>
+        <ListItem
+          button
+          key={item.text}
+          component={Link}
+          to={item.route}
+          style={{
+            backgroundImage: `url(${backgroundImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            color: 'white', // Adjust as necessary for visibility
+            margin: '10px 0', // Add some space between items
+            borderRadius: '4px', // Optional: for styled corners
+          }}
+        >
+          <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
           <ListItemText primary={item.text} />
         </ListItem>
       ))}
