@@ -19,6 +19,7 @@ import ViewResults from './admin/ViewResults'
 import ManageSurvey from './admin/ManageSurvey'
 import Notification from './surveyor/Notification'
 import PreviewSurvey from './surveyor/PreviewSurvey';
+import EmailSurvey from './surveyor/EmailSurvey';
 
 const darkTheme = createTheme({
   palette: {
@@ -120,6 +121,11 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path ="/email-survey/:templateId" element={
+              <ProtectedRoute roles={['Surveyor']}>
+                <Layout><EmailSurvey /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Catch-all route to handle undefined paths */}
             <Route path="*" element={<Navigate to={!user ? "/login" : `/${user.role.toLowerCase()}/dashboard`} replace />} />
