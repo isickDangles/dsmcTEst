@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../components/AuthContext';
+import { Grid, Card, CardActionArea, CardContent, Typography, Container } from '@mui/material';
 
-  const RespondentDashboard = () => {
+const RespondentDashboard = () => {
   const { user } = useContext(AuthContext);
   const [surveys, setSurveys] = useState([]);
   const navigate = useNavigate();
@@ -22,21 +23,32 @@ import { AuthContext } from '../components/AuthContext';
     };
 
     fetchSurveys();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []); 
 
   return (
-    <div>
-      <h1>Respondent Dashboard</h1>
-      <ul>
+    <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+      <Typography variant="h4" gutterBottom>
+        Respondent Dashboard
+      </Typography>
+      <Grid container spacing={4} direction="column">
         {surveys.map((survey) => (
-          <li key={survey.surveytemplateid} onClick={() => navigate(`/fill-survey/${survey.surveytemplateid}`)} style={{ cursor: 'pointer' }}>
-            {survey.title}
-          </li>
+          <Grid item xs={12} key={survey.surveytemplateid}> {/* Ensure to use the correct key property here */}
+            <Card elevation={3}>
+              <CardActionArea onClick={() => navigate(`/fill-survey/${survey.surveytemplateid}`)}> {/* Ensure to use the correct property for navigation */}
+                <CardContent>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {survey.title}
+                  </Typography>
+                  {/* Optional: Include additional survey details here */}
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
         ))}
-      </ul>
-
-    </div>
+      </Grid>
+    </Container>
   );
 };
 
 export default RespondentDashboard;
+

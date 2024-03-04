@@ -24,7 +24,6 @@ const PreviewSurvey = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
 
   const darkTheme = createTheme({
     palette: {
@@ -67,6 +66,8 @@ const PreviewSurvey = () => {
       marginBottom: '8px',
     };
 
+    const likertLabels = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
+
     return (
       <Card sx={{ maxWidth: 600, mx: 'auto', my: 2 }}>
         <CardContent>
@@ -76,25 +77,25 @@ const PreviewSurvey = () => {
           {question.questiontype === 'Short Answer' ? (
             <TextField label="Your Answer" variant="outlined" fullWidth margin="normal" />
           ) : question.questiontype === 'Multiple Choice' ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 1 }}>
-              {choices.map((choice, index) => (
-                <Button key={index} variant="contained" sx={{ mt: 1, mb: 1 }}>
-                  {choice}
-                </Button>
-              ))}
-            </Box>
+            <FormControl component="fieldset">
+              <RadioGroup>
+                {choices.map((choice, index) => (
+                  <FormControlLabel key={index} value={choice} control={<Radio />} label={choice} />
+                ))}
+              </RadioGroup>
+            </FormControl>
           ) : question.questiontype === 'True or False' ? (
             <FormControl component="fieldset">
-              <RadioGroup row>
+              <RadioGroup>
                 <FormControlLabel value="True" control={<Radio />} label="True" />
                 <FormControlLabel value="False" control={<Radio />} label="False" />
               </RadioGroup>
             </FormControl>
           ) : question.questiontype === 'Likert Scale' ? (
             <FormControl component="fieldset">
-              <RadioGroup row>
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <FormControlLabel key={value} value={String(value)} control={<Radio />} label={String(value)} />
+              <RadioGroup>
+                {likertLabels.map((label, index) => (
+                  <FormControlLabel key={index} value={String(index + 1)} control={<Radio />} label={label} />
                 ))}
               </RadioGroup>
             </FormControl>
@@ -103,6 +104,7 @@ const PreviewSurvey = () => {
       </Card>
     );
   };
+  
   if (loading) {
     return <div>Loading survey details...</div>;
   }
@@ -127,6 +129,9 @@ const PreviewSurvey = () => {
               {renderQuestion(question)}
             </Box>
           ))}
+          <Typography variant="body2" align="center" color="textSecondary">
+            * Questions marked with a * are required
+          </Typography>
         </Box>
       </Container>
     </ThemeProvider>

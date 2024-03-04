@@ -32,17 +32,23 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 
+import ErrorMessage from '../components/ErrorMessage'
+
 export default function SurveyCreationPage() {
   const [surveyName, setSurveyName] = useState('');
+  const [surveyDescription, setSurveyDescription] = useState('');
+
   const [questions, setQuestions] = useState([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
   const [currentQuestion, setCurrentQuestion] = useState({
     text: '',
     type: '',
+    required: '',
     choices: [''],
   });
   const [open, setOpen] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [error, setError] = useState({ open: false, message: '' });
 
   const darkTheme = createTheme({
     palette: {
@@ -127,6 +133,9 @@ export default function SurveyCreationPage() {
     setCurrentQuestion({ ...currentQuestion, choices: newChoices });
   };
   const handleAddOrEditQuestion = () => {
+    if (!validateQuestion(currentQuestion)) {
+      return;
+    }
     if (editingQuestionIndex >= 0) {
       const updatedQuestions = questions.map((question, index) =>
         index === editingQuestionIndex ? currentQuestion : question
@@ -155,16 +164,24 @@ export default function SurveyCreationPage() {
   };
 
   const handleSubmitSurvey = async () => {
+    if (!validateSurvey()) {
+      return;
+    }
     handleCloseConfirmDialog();
+
+    // Use surveyDescription or default to "DSMC Survey" if it's empty
+    const finalSurveyDescription = surveyDescription || "DSMC Survey";
+
     const convertedQuestions = questions.map(question => ({
       text: question.text,
       questionType: parseInt(question.type, 10),
-      choices: question.choices || [],
+      required: question.required,
+      choices: question.choices || []
     }));
 
     const surveyData = {
       surveyTitle: surveyName,
-      surveyDescription: "Your survey description here",
+      surveyDescription: finalSurveyDescription, // Use the finalSurveyDescription here
       questions: convertedQuestions,
     };
 
@@ -184,11 +201,51 @@ export default function SurveyCreationPage() {
       const result = await response.json();
       console.log('Survey created:', result);
       setSurveyName('');
+      setSurveyDescription(''); // Reset survey description
       setQuestions([]);
     } catch (error) {
       console.error('Error creating survey:', error);
     }
   };
+
+  const validateQuestion = (question) => {
+    if (!question.text) {
+      setError({ open: true, message: 'Question text cannot be empty.' });
+      return false;
+    }
+    if (!question.type) {
+      setError({ open: true, message: 'Question type cannot be empty.' });
+      return false;
+    }
+    if (question.type === '2') {
+      if (question.choices.length === 0) {
+        setError({ open: true, message: 'Multiple choice questions must have at least one choice.' });
+        return false;
+      }
+      if (question.choices.some(choice => !choice)) {
+        setError({ open: true, message: 'Choice text cannot be empty.' });
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const validateSurvey = () => {
+    if (!surveyName) {
+      setError({ open: true, message: 'Survey name cannot be empty.' });
+      return false;
+    }
+    if (questions.length === 0) {
+      setError({ open: true, message: 'There are no questions in this survey. Be sure to add questions before submitting.' });
+      return false;
+    }
+    if (!questions.every(validateQuestion)) {
+      // Note: validateQuestion will set the appropriate error message.
+      return false;
+    }
+    return true;
+  };
+
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -204,6 +261,15 @@ export default function SurveyCreationPage() {
           value={surveyName}
           onChange={handleSurveyNameChange}
           margin="normal"
+        />
+        <TextField
+          fullWidth
+          label="Survey Description (Optional)"
+          variant="outlined"
+          value={surveyDescription}
+          onChange={(e) => setSurveyDescription(e.target.value)}
+          margin="normal"
+          placeholder="DSMC Survey" // Optional: provide a placeholder
         />
 
         {questions.map((question, index) => (
@@ -316,6 +382,7 @@ export default function SurveyCreationPage() {
             </Button>
           </DialogActions>
         </Dialog>
+        <ErrorMessage open={error.open} message={error.message} onClose={() => setError({ ...error, open: false })} />
 
 
       </Container>
@@ -323,5 +390,7 @@ export default function SurveyCreationPage() {
 
 
     </ThemeProvider>
+
+
   );
 }  
