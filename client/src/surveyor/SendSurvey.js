@@ -2,7 +2,8 @@ import React, { useState, useEffect , useContext} from 'react';
 import { Card, CardContent, Typography, Container, Grid, Button } from '@mui/material';
 import PreviewIcon from '@mui/icons-material/Preview';
 import SendIcon from '@mui/icons-material/Send';
-import { useNavigate } from 'react-router-dom';
+import { Router, Route, useNavigate } from 'react-router-dom';
+import EmailSurveyPage from './EmailSurvey';
 
 function SendSurvey() {
   const [surveys, setSurveys] = useState([]);
@@ -54,7 +55,9 @@ function SendSurvey() {
                   >
                     View
                   </Button>
-                  <Button variant="contained" color="secondary" startIcon={<SendIcon />} style={{ marginLeft: '10px' }}>
+                  <Button variant="contained" color="secondary" startIcon={<SendIcon />} style={{ marginLeft: '10px' }}
+                    onClick={() => navigate(`/email-survey/${survey.surveytemplateid}`)} 
+                  >
                     Send
                   </Button>
                 </CardContent>
