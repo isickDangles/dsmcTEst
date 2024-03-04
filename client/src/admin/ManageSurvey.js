@@ -36,14 +36,31 @@ function ManageSurvey() {
         setOpenDialog(true);
     };
 
-    const confirmDelete = () => {
-        // Here you would delete the survey from your database or state
-        console.log(`Deleting survey: ${selectedSurvey.title}`);
-        setOpenDialog(false);
-        // Update surveys state to remove the deleted survey
-        // This is a placeholder for actual deletion logic
-        setSurveys(surveys.filter(survey => survey.surveytemplateid !== selectedSurvey.surveytemplateid));
-    };
+    const confirmDelete = async () => {
+        try {
+          const response = await fetch(`/api/survey-template/${selectedSurvey.surveytemplateid}/delete`, {
+            method: 'PATCH', // Use PATCH to indicate updating part of the resource
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
+          const result = await response.json();
+          console.log('Survey marked as deleted:', result);
+      
+          // Update the local state to reflect the change
+          setSurveys(surveys.filter(survey => survey.surveytemplateid !== selectedSurvey.surveytemplateid));
+      
+          setOpenDialog(false);
+        } catch (error) {
+          console.error('Error marking survey as deleted:', error);
+        }
+      };
+      
 
     return (
         <Container maxWidth="xl" style={{ marginTop: '2rem' }}>

@@ -53,7 +53,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-
 app.get('/api/survey-details/:templateId', async (req, res) => {
   const { templateId } = req.params;
 
@@ -82,7 +81,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
         FROM choices
         WHERE question_id = $1;
       `;
-      const choicesResult = await pool.query(choicesQuery, [question.questionID]); // Corrected to questionID
+      const choicesResult = await pool.query(choicesQuery, [question.questionid]); // Use lowercase questionid
       
       surveyDetails.push({
         ...question,
@@ -96,6 +95,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
 
 
 
@@ -208,16 +208,18 @@ app.get('/api/survey-template/:templateId', async (req, res) => {
   }
 });
 
-// Surveys route
 app.get('/api/surveys', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id AS surveyTemplateID, name AS title, description FROM survey_templates');
+    const { rows } = await pool.query(
+      'SELECT id AS surveyTemplateID, name AS title, description FROM survey_templates WHERE deleted_at IS NULL'
+    );
     res.json(rows);
   } catch (error) {
     console.error('Failed to fetch surveys:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 
@@ -235,7 +237,7 @@ app.get('/api/saved-questions', async (req, res) => {
 
 // Route to save a question to the question bank
 app.post('/api/save-question', async (req, res) => {
-  
+
 
 
   // Log the received data
@@ -274,6 +276,25 @@ app.post('/api/save-question', async (req, res) => {
 });
 
 
+app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
+  const { templateId } = req.params;
+
+  try {
+    const result = await pool.query(
+      'UPDATE survey_templates SET deleted_at = NOW() WHERE id = $1 RETURNING *',
+      [templateId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Survey template not found or already deleted." });
+    }
+
+    res.json({ message: 'Survey template marked as deleted successfully.', surveyTemplate: result.rows[0] });
+  } catch (error) {
+    console.error('Failed to mark survey as deleted:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
 
 
 app.listen(5003, () => { console.log("Server started on port 5003") })

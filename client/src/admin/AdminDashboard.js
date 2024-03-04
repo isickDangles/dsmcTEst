@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../components/AuthContext';
 import { styled, useTheme } from '@mui/material/styles';
 import { Card, CardActionArea, CardContent, Typography, Grid, Container } from '@mui/material';
+import { DARK_THEME_COLORS } from './constants'; // Importing colors
 import CreateIcon from '@mui/icons-material/Create';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
@@ -11,48 +12,47 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const AdminDashboard = () => {
-    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const theme = useTheme();
 
     const pages = [
-        { title: 'Create Survey', path: '/createSurvey', icon: CreateIcon, color: theme.palette.primary.main },
-        { title: 'Manage Survey', path: '/manageSurvey', icon: ManageSearchIcon, color: theme.palette.secondary.main },
-        { title: 'Survey Status', path: '/surveyHistory', icon: HistoryToggleOffIcon, color: theme.palette.info.main },
-        { title: 'Admin Tools', path: '/adminTools', icon: BuildIcon, color: theme.palette.warning.main },
-        { title: 'Analyze Results', path: '/analyzeResults', icon: AnalyticsIcon, color: theme.palette.success.main },
-        { title: 'View Results', path: '/viewResults', icon: VisibilityIcon, color: theme.palette.error.main },
+        { title: 'Create Survey', path: '/createSurvey', icon: CreateIcon },
+        { title: 'Manage Survey', path: '/manageSurvey', icon: ManageSearchIcon },
+        { title: 'Survey Status', path: '/surveyHistory', icon: HistoryToggleOffIcon },
+        { title: 'Admin Tools', path: '/adminTools', icon: BuildIcon },
+        { title: 'Analyze Results', path: '/analyzeResults', icon: AnalyticsIcon },
+        { title: 'View Results', path: '/viewResults', icon: VisibilityIcon },
     ];
 
-    const BackgroundImageCard = styled(Card)(({ color }) => ({
+    const BackgroundImageCard = styled(Card)({
         height: '180px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         textAlign: 'center',
-        backgroundColor: color, // Dynamic color based on the page
-        color: '#fff',
+        backgroundColor: DARK_THEME_COLORS.CARD_BACKGROUND, // Using constant
+        color: DARK_THEME_COLORS.TEXT_PRIMARY,
         transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
         '&:hover': {
             transform: 'scale(1.05)',
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.12)',
+            boxShadow: `0 4px 20px 0 ${DARK_THEME_COLORS.HOVER_SHADOW}`,
         },
-    }));
+    });
 
     return (
         <Container>
-            <Typography variant="h4" gutterBottom align="center" style={{ color: '#fff', fontWeight: 'bold', marginBottom: '20px' }}>
+            <Typography variant="h4" gutterBottom align="center" style={{ color: DARK_THEME_COLORS.TEXT_PRIMARY, fontWeight: 'bold', marginBottom: '20px' }}>
                 Admin Dashboard
             </Typography>
             <Grid container spacing={3} justifyContent="center">
                 {pages.map((page, index) => (
                     <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
-                        <BackgroundImageCard color={page.color}>
+                        <BackgroundImageCard>
                             <CardActionArea onClick={() => navigate(page.path)} style={{ height: '100%' }}>
                                 <CardContent style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                                    {React.createElement(page.icon, { style: { fontSize: 60, color: 'rgba(255, 255, 255, 0.87)' }, color: "inherit" })}
-                                    <Typography variant="h5" component="div" style={{ fontWeight: 'bold', marginTop: '20px' }}>
+                                    {React.createElement(page.icon, { style: { fontSize: 60, color: DARK_THEME_COLORS.TEXT_SECONDARY }, color: "inherit" })}
+                                    <Typography variant="h5" component="div" style={{ fontWeight: 'bold', marginTop: '20px', color: DARK_THEME_COLORS.TEXT_PRIMARY }}>
                                         {page.title}
                                     </Typography>
                                 </CardContent>

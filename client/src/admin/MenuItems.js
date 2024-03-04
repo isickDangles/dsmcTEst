@@ -13,6 +13,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PollIcon from '@mui/icons-material/Poll';
+import { useTheme } from '@mui/material/styles';
 
 import { AuthContext } from '../components/AuthContext'; 
 
@@ -28,10 +29,9 @@ export const menuItems = [
   { text: 'Survey', icon: <PollIcon />, route: '/survey', roles: ['Respondent'] },
   { text: 'Admin Tools', icon: <BuildIcon />, route: '/adminTools', roles: ['Admin'] },
 
-];
-const MenuItemsComponent = () => {
+];const MenuItemsComponent = () => {
   const { user } = useContext(AuthContext);
-  const backgroundImageUrl = '/static/images/buttons/breakfast.jpg'; // Confirm this is the correct path
+  const theme = useTheme(); // Use the useTheme hook to access the current theme
   const visibleMenuItems = menuItems.filter(item => item.roles.includes(user.role));
 
   return (
@@ -42,18 +42,18 @@ const MenuItemsComponent = () => {
           key={item.text}
           component={Link}
           to={item.route}
-          style={{
-            backgroundImage: `url(${backgroundImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            color: 'white', // Adjust as necessary for visibility
+          sx={{
             margin: '10px 0', // Add some space between items
             borderRadius: '4px', // Optional: for styled corners
+            color: theme.palette.text.primary, // Dynamically set color based on theme
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover, // Optional: change background on hover based on theme
+            },
+            // If using backgroundImage, ensure text visibility or consider alternative styling
           }}
         >
-          <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
-          <ListItemText primary={item.text} />
+          <ListItemIcon sx={{ color: theme.palette.text.primary }}>{item.icon}</ListItemIcon>
+          <ListItemText primary={item.text} sx={{ color: theme.palette.text.primary }} />
         </ListItem>
       ))}
     </div>
