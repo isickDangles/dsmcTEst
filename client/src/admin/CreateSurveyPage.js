@@ -43,6 +43,7 @@ export default function SurveyCreationPage() {
   const [currentQuestion, setCurrentQuestion] = useState({
     text: '',
     type: '',
+    required: '',
     choices: [''],
   });
   const [open, setOpen] = useState(false);
@@ -174,7 +175,8 @@ export default function SurveyCreationPage() {
     const convertedQuestions = questions.map(question => ({
       text: question.text,
       questionType: parseInt(question.type, 10),
-      choices: question.choices || [],
+      required: question.required,
+      choices: question.choices || []
     }));
 
     const surveyData = {

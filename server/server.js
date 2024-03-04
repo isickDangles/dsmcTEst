@@ -115,8 +115,8 @@ app.post('/create-survey-template', async (req, res) => {
     for (const question of questions) {
       // Insert the question
       const questionResult = await pool.query(
-        'INSERT INTO questions (question, question_type_id) VALUES ($1, $2) RETURNING id',
-        [question.text, question.questionType]
+        'INSERT INTO questions (question, question_type_id, is_required) VALUES ($1, $2, $3) RETURNING id',
+        [question.text, question.questionType, question.required]
       );
       const questionID = questionResult.rows[0].id;
 

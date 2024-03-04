@@ -59,15 +59,15 @@ const SurveyPage = () => {
   const renderQuestion = (question) => {
     const choices = question.choices || [];
     const questionText = question.is_required ? `${question.question} *` : question.question;
-  
+
     const questionTextStyle = {
       color: 'white',
       fontWeight: 'bold',
       marginBottom: '8px',
     };
-  
+
     const likertLabels = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
-  
+
     return (
       <Card sx={{ maxWidth: 600, mx: 'auto', my: 2 }}>
         <CardContent>
@@ -129,6 +129,9 @@ const SurveyPage = () => {
               {renderQuestion(question)}
             </Box>
           ))}
+          <Typography variant="body2" align="center" color="textSecondary">
+            * Questions marked with a * are required
+          </Typography>
         </Box>
       </Container>
     </ThemeProvider>
