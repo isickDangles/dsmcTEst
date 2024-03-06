@@ -23,6 +23,7 @@ import {
   Fab,
   DialogContentText
 } from '@mui/material';
+
 import CheckIcon from '@mui/icons-material/Check';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -33,22 +34,23 @@ import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 
 import ErrorMessage from '../components/ErrorMessage'
+import SuccessMessage from '../components/SuccessMessage'
 
 export default function SurveyCreationPage() {
   const [surveyName, setSurveyName] = useState('');
   const [surveyDescription, setSurveyDescription] = useState('');
-
   const [questions, setQuestions] = useState([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
   const [currentQuestion, setCurrentQuestion] = useState({
     text: '',
     type: '',
-    required: '',
+    isRequired: '',
     choices: [''],
   });
   const [open, setOpen] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [error, setError] = useState({ open: false, message: '' });
+  const [success, setSuccess] = useState({ open: false, message: '' });
 
   const darkTheme = createTheme({
     palette: {
@@ -175,7 +177,7 @@ export default function SurveyCreationPage() {
     const convertedQuestions = questions.map(question => ({
       text: question.text,
       questionType: parseInt(question.type, 10),
-      required: question.required,
+      isRequired: question.isRequired,
       choices: question.choices || []
     }));
 
@@ -200,6 +202,8 @@ export default function SurveyCreationPage() {
 
       const result = await response.json();
       console.log('Survey created:', result);
+      setSuccess({ open: true, message: 'Survey successfully submitted!' }); // Set success message
+
       setSurveyName('');
       setSurveyDescription(''); // Reset survey description
       setQuestions([]);
@@ -298,9 +302,9 @@ export default function SurveyCreationPage() {
           <FormControlLabel
             control={
               <Checkbox
-                checked={currentQuestion.required || false}
-                onChange={(e) => handleCurrentQuestionChange('required', e.target.checked)}
-                name="required"
+                checked={currentQuestion.isRequired || false}
+                onChange={(e) => handleCurrentQuestionChange('isRequired', e.target.checked)}
+                name="isRequired"
               />
             }
             label="Required"
@@ -383,6 +387,7 @@ export default function SurveyCreationPage() {
           </DialogActions>
         </Dialog>
         <ErrorMessage open={error.open} message={error.message} onClose={() => setError({ ...error, open: false })} />
+        <SuccessMessage open={success.open} autoHideDuration={6000} onClose={() => setSuccess({ ...success, open: false })} message={success.message} />
 
 
       </Container>

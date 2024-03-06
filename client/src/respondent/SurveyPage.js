@@ -104,7 +104,7 @@ const SurveyPage = () => {
       </Card>
     );
   };
-  
+
   if (loading) {
     return <div>Loading survey details...</div>;
   }
@@ -114,26 +114,30 @@ const SurveyPage = () => {
   }
 
   return (
+
     <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Container maxWidth="md">
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h4" gutterBottom align="center">
-            {surveyTitle}
-          </Typography>
-          <Typography variant="subtitle1" gutterBottom align="center">
-            {surveyDescription}
-          </Typography>
-          {questions.map((question, index) => (
-            <Box key={index} sx={{ mb: 2 }}>
-              {renderQuestion(question)}
-            </Box>
-          ))}
-          <Typography variant="body2" align="center" color="textSecondary">
-            * Questions marked with a * are required
-          </Typography>
-        </Box>
-      </Container>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+
+        <CssBaseline />
+        <Container maxWidth="md">
+          <Box sx={{ my: 4 }}>
+            <Typography variant="h4" gutterBottom align="center">
+              {surveyTitle}
+            </Typography>
+            <Typography variant="subtitle1" gutterBottom align="center">
+              {surveyDescription}
+            </Typography>
+            {questions.map((question, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                {renderQuestion(question)}
+              </Box>
+            ))}
+            <Typography variant="body2" align="center" color="textSecondary">
+              * Questions marked with a * are required
+            </Typography>
+          </Box>
+        </Container>
+      </div>
     </ThemeProvider>
   );
 };

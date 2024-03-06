@@ -105,7 +105,6 @@ app.post('/create-survey-template', async (req, res) => {
   try {
     await pool.query('BEGIN');
 
-    // Create a survey template
     const surveyTemplateResult = await pool.query(
       'INSERT INTO survey_templates (name, description) VALUES ($1, $2) RETURNING id',
       [surveyTitle, surveyDescription]
@@ -120,7 +119,6 @@ app.post('/create-survey-template', async (req, res) => {
       );
       const questionID = questionResult.rows[0].id;
 
-      // Link the question to the survey template
       await pool.query(
         'INSERT INTO survey_template_questions (survey_template_id, question_id) VALUES ($1, $2)',
         [surveyTemplateID, questionID]

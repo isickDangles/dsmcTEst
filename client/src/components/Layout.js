@@ -19,9 +19,7 @@ const Layout = ({ children }) => {
     };
 
     const navigateToDashboard = () => {
-        // Access the user's role from local storage
         const role = localStorage.getItem('role');
-
         if (role) {
             switch (role) {
                 case 'Admin':
@@ -84,11 +82,12 @@ const Layout = ({ children }) => {
                 variant="persistent"
                 open={drawerOpen}
                 sx={{
-                    width: 240,
+                    width: drawerOpen ? 240 : 0, // Conditionally set width based on drawerOpen
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        width: 240,
+                        width: drawerOpen ? 240 : 0, // Conditionally set width based on drawerOpen
                         boxSizing: 'border-box',
+                        overflowX: 'hidden', // Prevent horizontal scrollbar when drawer is closed
                     },
                 }}
             >
@@ -99,7 +98,7 @@ const Layout = ({ children }) => {
                     </List>
                 </Box>
             </Drawer>
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: 3, transition: 'margin-left .5s', marginLeft: `${drawerOpen ? 240 : 0}px`, width: `calc(100% - ${drawerOpen ? 240 : 0}px)` }}>
                 <Toolbar />
                 {children}
             </Box>

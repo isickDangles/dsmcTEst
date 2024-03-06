@@ -1,145 +1,155 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
+import { Container, TextField, Button, Typography, Box, Paper, List, ListItem, ListItemText, IconButton } from '@mui/material';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useTheme } from '@mui/material/styles';
+import ErrorMessage from '../components/ErrorMessage'; 
 
-import {Button} from '@mui/material'
-
-
- 
 const EmailSurveyPage = () => {
-    const labelStyle = {
-      fontSize: '20px', // Set your desired font size
-      fontWeight: 'bold', // Optional: Set font weight or other styles
-    };
-    // Define a state variable for the input value
-    const [RecipientValue, setRecipientValue] = useState('');
-    const maxRecipientLimit = 255;
-    // Event handler to update the state when the input changes
-    const handleRecipientChange = (event) => {
-      if (event.target.value.length <= maxRecipientLimit){ 
-      setRecipientValue(event.target.value);
-      }
-    };
-    const [SubjectValue, setSubjectValue] = useState('');
-    const maxSubjectLimit = 255;
-    const handleSubjectChange = (event) => {
-      if (event.target.value.length <= maxSubjectLimit){
-        setSubjectValue(event.target.value);
-      }
-    };
-    const [MessageValue, setMessageValue] = useState('');
-    const maxMessageLimit = 2000;
-    const handleMessageChange = (event) => {
-      if (event.target.value.length <= maxMessageLimit){
-        setMessageValue(event.target.value);
-      }
-    };
-    const handleEmailClick = () => {
-      const emailSubject = SubjectValue; // Set your desired email subject
-      const emailAddress = RecipientValue; // Set your desired email address
-      const emailMessage = MessageValue;
+  const theme = useTheme();
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [defaultMessage, setDefaultMessage] = useState('');
+  const [recipients, setRecipients] = useState([]);
+  const [newRecipient, setNewRecipient] = useState('');
 
-    // Replace spaces with %20 in the email message
-    const formattedMessage = encodeURIComponent(emailMessage).replace(/%20/g, '%20');
+  const [emailError, setEmailError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const loadedDefaultMessage = localStorage.getItem('defaultMessage') || '';
+    setDefaultMessage(loadedDefaultMessage);
+    setMessage(loadedDefaultMessage);
+  }, []);
+
+  const handleSaveDefaultMessage = () => {
+    localStorage.setItem('defaultMessage', defaultMessage);
+  };
+
+  const handleAddRecipient = () => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple email pattern for validation
+    if (!emailPattern.test(newRecipient)) {
+      setEmailError(true);
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
   
-      // Construct the mailto URL
-      const mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(emailSubject)}&body=${formattedMessage}`;
+    if (!recipients.includes(newRecipient)) {
+      setRecipients([...recipients, newRecipient]);
+      setNewRecipient('');
+    }
   
-      // Open default email client
-      window.location.href = mailtoLink;
-    };
-    return (
-        <div>
-          <h2>Email Survey</h2>
-          <div style = {{marginLeft: '250px', marginTop: '25px'}}>
-          <label style={labelStyle}>Recipient:</label>
-          </div>
-          <div>
-          <input
-            type="email"
-            value={RecipientValue}
-            onChange={handleRecipientChange}
-            maxLength={maxRecipientLimit}
-            style={{
-            flex:'self-center',
-            background: 'white',
-            border: 'gray-900',
-            border: '1px solid #ccc',
-            rounded: 'lg',
-            focus: 'ring-primary-500',
-            focus: 'border-primary-500',
-            padding: '2.5px',
-            fontSize: '16px',
+    setEmailError(false); // Reset error state if the addition is successful
+  };
+  
+
+  const handleRemoveRecipient = (email) => {
+    setRecipients(recipients.filter((recipient) => recipient !== email));
+  };
+
+  const handleSendEmail = () => {
+    const mailtoLink = `mailto:${recipients.join(';')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+    window.location.href = mailtoLink;
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ mt: 4, display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start', gap: 4 }}>
+      {/* Message Template Section */}
+      <Paper elevation={3} sx={{ p: 2, width: '30%', mr: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Message Template
+        </Typography>
+        <TextareaAutosize
+          minRows={8}
+          style={{
+            width: '100%',
+            padding: '10px',
+            fontSize: '1rem',
             borderRadius: '4px',
-            width: '500px',
-            marginTop: '35px',
-            marginLeft: '75px',
-            }}
-            required
-            placeholder='username@email.com'         
-          ></input>
-          </div>
-          <div style = {{marginLeft: '260px', marginTop: '45px'}}>
-          <label style={labelStyle}>Subject:</label>
-          </div>
-          <div>
-          <input
-            type="text"
-            value={SubjectValue}
-            onChange={handleSubjectChange}
-            maxLength={maxSubjectLimit}
-            style={{
-            flex:'self-center',
-            background: 'white',
-            border: 'gray-900',
-            border: '1px solid #ccc',
-            rounded: 'lg',
-            focus: 'ring-primary-500',
-            focus: 'border-primary-500',
-            padding: '2.5px',
-            fontSize: '16px',
+            borderColor: theme.palette.mode === 'light' ? '#ccc' : 'rgba(255,255,255,0.23)',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            resize: 'vertical'
+          }}
+          value={defaultMessage}
+          onChange={(e) => setDefaultMessage(e.target.value)}
+          placeholder="Set a default message..."
+        />
+        <Button variant="contained" onClick={handleSaveDefaultMessage} sx={{ mt: 1 }}>
+          Save as Default
+        </Button>
+      </Paper>
+
+      {/* Email Survey Section */}
+      <Box sx={{ flex: 2, minWidth: '250px' }}>
+        <Typography variant="h6" gutterBottom>
+          Email Survey
+        </Typography>
+        <TextField
+          fullWidth
+          label="Subject"
+          variant="outlined"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Enter survey subject"
+          margin="normal"
+        />
+        <TextareaAutosize
+          minRows={8}
+          style={{
+            width: '100%',
+            padding: '10px',
+            fontSize: '1rem',
             borderRadius: '4px',
-            width: '500px',
-            marginTop: '35px',
-            marginLeft: '75px',
-            }}
-            required
-            placeholder='Check out this cool survey...'           
-          ></input>
-          </div>
-          <div style = {{marginLeft: '255px', marginTop: '55px'}}>
-          <label style={labelStyle}>Message:</label>
-          </div>
-          <div>
-          <textarea
-            type="text"
-            rows ='6'
-            value={MessageValue}
-            onChange={handleMessageChange}
-            maxLength={maxMessageLimit}
-            style={{
-            flex:'self-center',
-            background: 'white',
-            border: 'gray-900',
-            border: '1px solid #ccc',
-            rounded: 'lg',
-            focus: 'ring-primary-500',
-            focus: 'border-primary-500',
-            padding: '2.5px',
-            fontSize: '16px',
-            borderRadius: '4px',
-            width: '600px',
-            marginTop: '35px',
-            marginLeft: '30px',
-            }}
-            required
-            placeholder='Write a nice message...'           
-          ></textarea>          
-          </div>
-          <Button
-            onClick = {handleEmailClick}
+            borderColor: theme.palette.mode === 'light' ? '#ccc' : 'rgba(255,255,255,0.23)',
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            resize: 'vertical'
+          }}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)} // Corrected to update `message`
+          placeholder="Write your survey message..."
+        />
+        <Button variant="contained" onClick={handleSendEmail} sx={{ mt: 1 }}>
+          Open in Email Client
+        </Button>
+      </Box>
+
+      <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
+        <Typography variant="h6" gutterBottom>
+          Manage Respondents
+        </Typography>
+        <TextField
+          fullWidth
+          label="Add Respondent Email"
+          variant="outlined"
+          value={newRecipient}
+          onChange={(e) => setNewRecipient(e.target.value)}
+          margin="normal"
+          placeholder="respondent@example.com"
+        />
+        <Button variant="contained" onClick={handleAddRecipient} sx={{ mt: 1 }}>
+          Add Respondent
+        </Button>
+        <List sx={{ mt: 2, maxHeight: 300, overflow: 'auto' }}>
+          {recipients.map((email, index) => (
+            <ListItem
+              key={index}
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveRecipient(email)}>
+                  <DeleteIcon />
+                </IconButton>
+              }
             >
-            Send mail
-          </Button>
-        </div>
-      );
-    };
+              <ListItemText primary={email} />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+      <ErrorMessage open={emailError} message={errorMessage} onClose={() => setEmailError(false)} />
+
+    </Container>
+  );
+};
+
 export default EmailSurveyPage;
