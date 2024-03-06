@@ -25,12 +25,34 @@ const SurveyPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [responses, setResponses] = useState({});
+
+
   const darkTheme = createTheme({
     palette: {
       mode: 'dark',
     },
   });
-
+  const handleSurveySubmit = async () => {
+    try {
+      const response = await fetch(`/api/submit-survey/${templateId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ responses }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Survey submission failed');
+      }
+  
+      console.log('Survey submitted successfully');
+    } catch (error) {
+      console.error('Error submitting survey:', error);
+    }
+  };
+  
   useEffect(() => {
     const fetchSurveyDetails = async () => {
       setLoading(true);
@@ -136,7 +158,12 @@ const SurveyPage = () => {
               * Questions marked with a * are required
             </Typography>
           </Box>
+          <Button variant="contained" color="primary" onClick={handleSurveySubmit} sx={{ mt: 2, display: 'block', mx: 'auto' }}>
+  Submit Survey
+</Button>
         </Container>
+
+
       </div>
     </ThemeProvider>
   );

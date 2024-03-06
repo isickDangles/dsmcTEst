@@ -5,7 +5,20 @@ import CloseIcon from '@mui/icons-material/Close';
 import MenuItemsComponent from '../admin/MenuItems';
 import logout from "./Logout";
 import { useNavigate } from 'react-router-dom';
+import { useScrollTrigger, Slide } from '@mui/material';
 
+function HideOnScroll(props) {
+    const { children } = props;
+    // Trigger activation when the user scrolls down
+    const trigger = useScrollTrigger();
+  
+    return (
+      <Slide appear={false} direction="down" in={!trigger}>
+        {children}
+      </Slide>
+    );
+  }
+  
 const Layout = ({ children }) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const navigate = useNavigate();
@@ -13,6 +26,8 @@ const Layout = ({ children }) => {
     const handleDrawerToggle = () => {
         setDrawerOpen(!drawerOpen);
     };
+    
+    
 
     const handleLogout = async () => {
         await logout();
@@ -41,6 +56,7 @@ const Layout = ({ children }) => {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
+            <HideOnScroll>
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: '#192841' }}>
                 <Toolbar>
                     <IconButton
@@ -78,6 +94,7 @@ const Layout = ({ children }) => {
                     </Button>
                 </Toolbar>
             </AppBar>
+            </HideOnScroll>
             <Drawer
                 variant="persistent"
                 open={drawerOpen}
