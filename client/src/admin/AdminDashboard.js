@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
 import { Card, CardActionArea, CardContent, Typography, Grid, Container } from '@mui/material';
-import { DARK_THEME_COLORS } from './constants'; // Importing colors
+import { DARK_THEME_COLORS } from './constants';
 import CreateIcon from '@mui/icons-material/Create';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
@@ -29,7 +29,7 @@ const AdminDashboard = () => {
         justifyContent: 'center',
         alignItems: 'center',
         textAlign: 'center',
-        backgroundColor: DARK_THEME_COLORS.CARD_BACKGROUND, // Using constant
+        backgroundColor: DARK_THEME_COLORS.CARD_BACKGROUND,
         color: DARK_THEME_COLORS.TEXT_PRIMARY,
         transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
         '&:hover': {
@@ -38,14 +38,13 @@ const AdminDashboard = () => {
         },
     });
 
-    // Enclose Grid in a flex container that centers its children
     return (
         <Container>
             <Typography variant="h4" gutterBottom align="center" style={{ color: DARK_THEME_COLORS.TEXT_PRIMARY, fontWeight: 'bold', marginBottom: '20px' }}>
                 Admin Dashboard
             </Typography>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <Grid container spacing={3} justifyContent="center" style={{ maxWidth: 1200 }}> {/* Adjust maxWidth as needed */}
+                <Grid container spacing={3} justifyContent="center" style={{ maxWidth: 1200 }}>
                     {pages.map((page, index) => (
                         <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
                             <BackgroundImageCard>

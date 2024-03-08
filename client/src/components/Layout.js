@@ -9,7 +9,6 @@ import { useScrollTrigger, Slide } from '@mui/material';
 
 function HideOnScroll(props) {
     const { children } = props;
-    // Trigger activation when the user scrolls down
     const trigger = useScrollTrigger();
   
     return (
@@ -99,12 +98,12 @@ const Layout = ({ children }) => {
                 variant="persistent"
                 open={drawerOpen}
                 sx={{
-                    width: drawerOpen ? 240 : 0, // Conditionally set width based on drawerOpen
+                    width: drawerOpen ? 240 : 0,
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        width: drawerOpen ? 240 : 0, // Conditionally set width based on drawerOpen
+                        width: drawerOpen ? 240 : 0, 
                         boxSizing: 'border-box',
-                        overflowX: 'hidden', // Prevent horizontal scrollbar when drawer is closed
+                        overflowX: 'hidden', 
                     },
                 }}
             >

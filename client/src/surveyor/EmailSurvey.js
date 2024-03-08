@@ -39,7 +39,7 @@ const EmailSurveyPage = () => {
       setNewRecipient('');
     }
   
-    setEmailError(false); // Reset error state if the addition is successful
+    setEmailError(false); 
   };
   
 
