@@ -6,8 +6,8 @@ import {Button} from '@mui/material'
  
 const EmailSurveyPage = () => {
     const labelStyle = {
-      fontSize: '20px', // Set your desired font size
-      fontWeight: 'bold', // Optional: Set font weight or other styles
+      fontSize: '20px', 
+      fontWeight: 'bold',
     };
     // Define a state variable for the input value
     const [RecipientValue, setRecipientValue] = useState('');
@@ -33,8 +33,8 @@ const EmailSurveyPage = () => {
       }
     };
     const handleEmailClick = () => {
-      const emailSubject = SubjectValue; // Set your desired email subject
-      const emailAddress = RecipientValue; // Set your desired email address
+      const emailSubject = SubjectValue;
+      const emailAddress = RecipientValue;
       const emailMessage = MessageValue;
 
     // Replace spaces with %20 in the email message
