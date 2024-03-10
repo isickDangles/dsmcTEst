@@ -29,7 +29,7 @@ function ManageSurvey() {
         };
 
         fetchSurveys();
-    }, []);
+    }, [surveys]);
 
     const handleDelete = (survey) => {
         setSelectedSurvey(survey);
