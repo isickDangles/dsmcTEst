@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const app = express()
-
 const saltRounds = 10; //const for hashing
 
 const pool = new Pool({
@@ -293,6 +292,7 @@ app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
 
 
 app.listen(5003, () => { console.log("Server started on port 5003") })
