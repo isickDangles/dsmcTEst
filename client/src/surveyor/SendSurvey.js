@@ -18,7 +18,6 @@ function SendSurvey() {
         }
         const data = await response.json();
         setSurveys(data); // Assuming the API returns an array of surveys
-        console.log(surveys);
       } catch (error) {
         console.error("Error fetching surveys:", error);
       }
