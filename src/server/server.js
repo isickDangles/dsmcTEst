@@ -38,7 +38,7 @@ app.post('/login', async (req, res) => {
 
         const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].name : null;
 
-        const token = jwt.sign({ userId: user.id, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
+        const token = jwt.sign({ userId: user.id, role: role }, "SECRET", { expiresIn: '24h' });
         res.json({ token, role: role });
       } else {
         res.status(401).send('Invalid credentials');
