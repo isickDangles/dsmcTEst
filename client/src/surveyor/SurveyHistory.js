@@ -5,7 +5,6 @@ import { Card, CardContent, CardActions, Button, Typography } from '@mui/materia
 
 function SurveyHistory() {
   const [surveys, setSurveys] = useState([]);
-  const [activeSurveyId, setActiveSurveyId] = useState(null); 
 
   const fetchSurveys = async () => {
     try {
@@ -24,9 +23,6 @@ function SurveyHistory() {
   useEffect(() => {
     fetchSurveys();
   }, []);
-  const toggleActiveSurvey = (surveyId) => {
-    setActiveSurveyId(activeSurveyId === surveyId ? null : surveyId);
-  };
   return (
     <div>
       <h1>Surveys</h1>
