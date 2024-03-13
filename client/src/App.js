@@ -21,6 +21,8 @@ import Notification from './surveyor/Notification'
 import PreviewSurvey from './surveyor/PreviewSurvey';
 import EmailSurvey from './surveyor/EmailSurvey';
 import EmailNotification from './surveyor/EmailNotification';
+import SurveyStatus from './admin/SurveyStatus';
+
 
 const darkTheme = createTheme({
   palette: {
@@ -70,8 +72,13 @@ function App() {
             } />
 
             <Route path="/surveyHistory" element={
-              <ProtectedRoute roles={['Admin', 'Surveyor']}>
+              <ProtectedRoute roles={['Surveyor']}>
                 <Layout><SurveyHistory /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/surveyStatus" element={
+              <ProtectedRoute roles={['Admin']}>
+                <Layout><SurveyStatus /></Layout>
               </ProtectedRoute>
             } />
 
