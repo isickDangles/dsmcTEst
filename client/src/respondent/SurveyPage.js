@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   TextField,
@@ -24,6 +24,7 @@ const SurveyPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const [responses, setResponses] = useState({});
   const handleInputChange = (questionId, response) => {
@@ -99,6 +100,7 @@ const SurveyPage = () => {
     };
 
     const likertLabels = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
+
 
     return (
       <Card sx={{ maxWidth: 600, mx: 'auto', my: 2 }}>
@@ -183,9 +185,12 @@ const SurveyPage = () => {
           <Button variant="contained" color="primary" onClick={handleSurveySubmit} sx={{ mt: 2, display: 'block', mx: 'auto' }}>
             Submit Survey
           </Button>
+
+
+          <Button variant="contained" color="primary" onClick={() => navigate(`/respondent/dashboard`)} sx={{ mt: 1, display: 'block', mx: 'auto' }}>
+            Back
+          </Button>
         </Container>
-
-
       </div>
     </ThemeProvider>
   );
