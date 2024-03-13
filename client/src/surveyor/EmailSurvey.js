@@ -14,6 +14,7 @@ import {
   FormControl,
   Select,
 } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ErrorMessage from '../components/ErrorMessage';
@@ -23,6 +24,7 @@ import InputLabel from '@mui/material/InputLabel';
 
 const EmailSurveyPage = () => {
   const theme = useTheme();
+  const { templateId } = useParams(); 
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [defaultMessage, setDefaultMessage] = useState('');
@@ -33,6 +35,8 @@ const EmailSurveyPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [projectName, setProjectName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
 
 
 
@@ -77,10 +81,61 @@ const EmailSurveyPage = () => {
   };
 
   const handleSendEmail = () => {
+    handleSubmitSurvey();
     const mailtoLink = `mailto:${recipients.join(';')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}%0A%0A%0APlease%20complete%20this%20survey%0A%0Ahttp://localhost:3000/fill-survey/5`;
     window.location.href = mailtoLink;
   };
+  const handleAddOrganization = () => {
+    setOrganizationName(organizationName)
+  }
+  const handleAddProject = () => {
+    setProjectName(projectName)
+  }
 
+  const handleSubmitSurvey = async () => {
+    try {
+      // Create organization
+      const orgResponse = await fetch('/api/create-organization', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: organizationName }),
+      });
+      const orgData = await orgResponse.json();
+  
+      // Create project
+      const projResponse = await fetch('/api/create-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: projectName }),
+      });
+      const projData = await projResponse.json();
+  
+      const surveyData = {
+        surveyTemplateId: parseInt(templateId, 10),
+        surveyorId: 1, 
+        organizationId: orgData.organizationId,
+        projectId: projData.projectId,
+        surveyorRoleId: null, // Not sure what this is...
+        startDate: startDate,
+        endDate: endDate,
+      };
+  
+      const surveyResponse = await fetch('/api/create-survey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(surveyData),
+      });
+  
+      if (surveyResponse.ok) {
+        console.log('Survey created successfully');
+      } else {
+        console.error('Failed to create survey');
+      }
+    } catch (error) {
+      console.error('Error creating survey or dependencies:', error);
+    }
+  };
+  
 
 
 
@@ -205,6 +260,49 @@ const EmailSurveyPage = () => {
           ))}
         </List>
       </Paper>
+            
+      <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
+        <Typography variant="h6" gutterBottom>
+          Manage Organization
+        </Typography>
+      <TextField
+          fullWidth
+          label="Add Organization"
+          variant="outlined"
+          value={organizationName}
+          onChange={(e) => setOrganizationName(e.target.value)}
+          margin="normal"
+          placeholder="Google"
+        />
+        <Button variant="contained" onClick={handleAddOrganization} sx={{ mt: 1 }}>
+          Add Organization
+        </Button>
+        </Paper>  <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
+        <Typography variant="h6" gutterBottom>
+          Manage Project
+        </Typography>
+      <TextField
+          fullWidth
+          label="Add Project"
+          variant="outlined"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          margin="normal"
+          placeholder="Google"
+        />
+        <Button variant="contained" onClick={handleAddProject} sx={{ mt: 1 }}>
+          Add Project
+        </Button>
+        </Paper>
+
+
+
+
+
+
+
+
+
       <ErrorMessage open={emailError} message={errorMessage} onClose={() => setEmailError(false)} />
     </Container>
   );

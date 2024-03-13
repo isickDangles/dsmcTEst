@@ -12,12 +12,12 @@ function SendSurvey() {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await fetch('/api/surveys'); // Adjust the URL to your actual API endpoint
+        const response = await fetch('/api/surveys');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setSurveys(data); // Assuming the API returns an array of surveys
+        setSurveys(data); 
       } catch (error) {
         console.error("Error fetching surveys:", error);
       }
@@ -41,7 +41,7 @@ function SendSurvey() {
               <Card sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 80 }}>
                 <CardContent>
                   <Typography variant="h5">
-                    {survey.title} {/* Use title instead of name */}
+                    {survey.title} 
                   </Typography>
                 </CardContent>
                 <CardContent>

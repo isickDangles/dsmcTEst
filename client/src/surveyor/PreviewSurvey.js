@@ -35,7 +35,7 @@ const PreviewSurvey = () => {
     const fetchSurveyDetails = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/survey-details/${templateId}`);
+        const response = await fetch(`/api/survey-template-details/${templateId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch survey details');
         }

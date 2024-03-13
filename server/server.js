@@ -47,7 +47,7 @@ app.post('/login', async (req, res) => {
 
 
 
-app.get('/api/survey-details/:templateId', async (req, res) => {
+app.get('/api/survey-template-details/:templateId', async (req, res) => {
   const { templateId } = req.params;
 
   try {
@@ -89,6 +89,53 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
+
+app.get('/api/survey-details/:surveyId', async (req, res) => {
+  // Corrected from templateId to surveyId to match the route parameter
+  const { surveyId } = req.params;
+
+  try {
+    const surveyDetailsQuery = `
+      SELECT s.id AS surveyID, st.name AS title, st.description, q.id AS questionID, q.question, 
+      q.is_required, qt.name AS questionType
+      FROM surveys s
+      JOIN survey_templates st ON s.survey_template_id = st.id
+      JOIN survey_template_questions sq ON st.id = sq.survey_template_id
+      JOIN questions q ON sq.question_id = q.id
+      JOIN question_types qt ON q.question_type_id = qt.id
+      WHERE s.id = $1;
+    `;
+
+    const surveyDetailsResult = await pool.query(surveyDetailsQuery, [surveyId]);
+
+    if (surveyDetailsResult.rows.length === 0) {
+      return res.status(404).json({ message: "Survey not found" });
+    }
+
+    const surveyDetails = [];
+
+    for (const question of surveyDetailsResult.rows) {
+      const choicesQuery = `
+        SELECT choice_text
+        FROM choices
+        WHERE question_id = $1;
+      `;
+      const choicesResult = await pool.query(choicesQuery, [question.questionid]); 
+
+      surveyDetails.push({
+        ...question,
+        choices: choicesResult.rows.map(choiceRow => choiceRow.choice_text)
+      });
+    }
+
+    res.json(surveyDetails);
+  } catch (error) {
+    console.error('Failed to fetch survey details:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
+
 app.post('/create-survey-template', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
 
@@ -138,6 +185,52 @@ app.post('/create-survey-template', async (req, res) => {
     res.status(500).json({ message: 'Error creating survey template', error: error.message });
   }
 });
+
+//Creates a SURVEY From the template survey data, with some additional parameters
+app.post('/api/create-survey', async (req, res) => {
+  const { surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate } = req.body;
+
+  try {
+    const insertSurveyQuery = `
+      INSERT INTO surveys (survey_template_id, surveyor_id, organization_id, project_id, surveyor_role_id, start_date, end_date, created_at, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $2) RETURNING id;
+    `;
+    const result = await pool.query(insertSurveyQuery, [surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate]);
+    const surveyId = result.rows[0].id;
+    res.status(201).json({ message: 'Survey created successfully!', surveyId: surveyId });
+  } catch (error) {
+    console.error('Failed to create survey:', error);
+    res.status(500).json({ message: 'Failed to create survey', error: error.message });
+  }
+});
+
+//CREATE Project and ORganization 
+
+// Endpoint to create an organization and return its ID
+app.post('/api/create-organization', async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query('INSERT INTO organizations (name) VALUES ($1) RETURNING id', [name]);
+    res.json({ organizationId: result.rows[0].id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error creating organization');
+  }
+});
+
+// Endpoint to create a project and return its ID
+app.post('/api/create-project', async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query('INSERT INTO projects (name) VALUES ($1) RETURNING id', [name]);
+    res.json({ projectId: result.rows[0].id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error creating project');
+  }
+});
+
+
 
 async function questionExists(question, pool) {
   // Attempt to find an existing question that matches the submitted question exactly

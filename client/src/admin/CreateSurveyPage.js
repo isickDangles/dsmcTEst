@@ -478,8 +478,7 @@ export default function SurveyCreationPage() {
             </Button>
           </DialogActions>
         </Dialog>
-        <ErrorMessage open={error.open} message={error.message} onClose={() => setError({ ...error, open: false })} />
-        <SuccessMessage open={success.open} autoHideDuration={6000} onClose={() => setSuccess({ ...success, open: false })} message={success.message} />
+        
 
 
       </Container>
@@ -536,7 +535,8 @@ export default function SurveyCreationPage() {
         </Box>
       </Drawer>
 
-
+      <ErrorMessage open={error.open} message={error.message} onClose={() => setError({ ...error, open: false })} />
+        <SuccessMessage open={success.open} autoHideDuration={6000} onClose={() => setSuccess({ ...success, open: false })} message={success.message} />
 
     </ThemeProvider>
 
