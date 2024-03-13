@@ -17,7 +17,6 @@ const createTables = async () => {
       id SERIAL PRIMARY KEY,
       username VARCHAR(255),
       email VARCHAR(255),
-      password VARCHAR(255),
       created_at TIMESTAMP,
       created_by INTEGER,
       updated_at TIMESTAMP,

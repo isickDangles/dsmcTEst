@@ -17,31 +17,25 @@ const pool = new Pool({
 
 app.use(express.json());
 
-
+// Login route
 // Login route
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { emailOrUsername } = req.body;
   try {
-    const userQuery = await pool.query('SELECT * FROM "users" WHERE username = $1', [username]);
+    const userQuery = await pool.query('SELECT * FROM "users" WHERE email = $1 OR username = $1', [emailOrUsername]);
     if (userQuery.rows.length > 0) {
       const user = userQuery.rows[0];
 
-      const isMatch = await bcrypt.compare(password, user.password);
-
-      if (isMatch) {
-        const roleQuery = await pool.query(`
+      const roleQuery = await pool.query(`
         SELECT r.name FROM roles r
         JOIN user_roles ur ON r.id = ur.role_id
         WHERE ur.user_id = $1
       `, [user.id]);
 
-        const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].name : null;
+      const role = roleQuery.rows.length > 0 ? roleQuery.rows[0].name : null;
 
-        const token = jwt.sign({ userId: user.id, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
-        res.json({ token, role: role });
-      } else {
-        res.status(401).send('Invalid credentials');
-      }
+      const token = jwt.sign({ userId: user.id, role: role }, process.env.SECRET_KEY, { expiresIn: '24h' });
+      res.json({ token, role: role });
     } else {
       res.status(404).send('User not found');
     }
@@ -50,6 +44,8 @@ app.post('/login', async (req, res) => {
     res.status(500).send('Server error during login');
   }
 });
+
+
 
 app.get('/api/survey-details/:templateId', async (req, res) => {
   const { templateId } = req.params;
@@ -79,7 +75,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
         FROM choices
         WHERE question_id = $1;
       `;
-      const choicesResult = await pool.query(choicesQuery, [question.questionid]); // Use lowercase questionid
+      const choicesResult = await pool.query(choicesQuery, [question.questionid]); 
 
       surveyDetails.push({
         ...question,
@@ -233,6 +229,28 @@ app.get('/api/surveys', async (req, res) => {
 });
 
 
+app.post('/api/survey-response/:surveyId', async (req, res) => {
+  const { surveyId } = req.params;
+  const { responses } = req.body; 
+
+  try {
+    await pool.query('BEGIN');
+
+    for (const [questionId, response] of Object.entries(responses)) {
+      await pool.query(
+        'INSERT INTO responses (question_id, survey_id, response) VALUES ($1, $2, $3)',
+        [questionId, surveyId, response]
+      );
+    }
+
+    await pool.query('COMMIT');
+    res.json({ message: 'Responses submitted successfully' });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Failed to submit responses:', error);
+    res.status(500).json({ message: 'Failed to submit responses', error: error.message });
+  }
+});
 
 
 // Route to fetch all saved questions
