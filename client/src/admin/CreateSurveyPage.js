@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -21,7 +21,9 @@ import {
   Paper,
   DialogTitle,
   Fab,
-  DialogContentText
+  DialogContentText, 
+  Drawer,
+  ButtonBase
 } from '@mui/material';
 
 import CheckIcon from '@mui/icons-material/Check';
@@ -51,12 +53,93 @@ export default function SurveyCreationPage() {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [error, setError] = useState({ open: false, message: '' });
   const [success, setSuccess] = useState({ open: false, message: '' });
+  const [savedQuestions, setSavedQuestions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const darkTheme = createTheme({
     palette: {
       mode: 'dark',
     },
   });
+
+  useEffect(() => {
+    const fetchSavedQuestions = async () => {
+      const response = await fetch('/api/saved-questions');
+      if (response.ok) {
+        const data = await response.json();
+        setSavedQuestions(data);
+      } else {
+        console.error('Failed to fetch saved questions');
+      }
+    };
+    fetchSavedQuestions();
+  }, []);
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleDoubleClickToAddQuestion = (questionToAdd) => {
+    const questionForSurvey = {
+      text: questionToAdd.question,
+      type: questionToAdd.question_type_id.toString(),
+      isRequired: questionToAdd.is_required,
+      choices: questionToAdd.choices || [''], // Adjust according to your structure
+    };
+    
+    // Add question directly to survey questions list
+    setQuestions(currentQuestions => [...currentQuestions, questionForSurvey]);
+  };
+
+  let clickTimeout = null;
+
+const handleSingleClickToEditQuestion = (questionToAdd) => {
+  if (clickTimeout !== null) {
+    clearTimeout(clickTimeout);
+    clickTimeout = null;
+  }
+
+  clickTimeout = setTimeout(() => {
+    // Logic to populate the current question (edit box) goes here
+    setCurrentQuestion({
+      text: questionToAdd.question,
+      type: questionToAdd.question_type_id.toString(),
+      isRequired: questionToAdd.is_required,
+      choices: questionToAdd.choices || [''],
+    });
+    // Assume opening a dialog or similar for editing if needed
+    setOpen(true);
+  }, 200); // 200ms timeout to distinguish single from double click
+};
+
+const handleQuestionCardClick = (question) => {
+  handleSingleClickToEditQuestion(question);
+};
+
+const handleQuestionCardDoubleClick = (question) => {
+  clearTimeout(clickTimeout); // Prevent the single click action
+  clickTimeout = null;
+  handleDoubleClickToAddQuestion(question);
+};
+
+  
+  const handleAddQuestion = (questionToAdd) => {
+    // Populate the currentQuestion state with the data from the saved question
+    setCurrentQuestion({
+      text: questionToAdd.question,
+      type: questionToAdd.question_type_id.toString(), // Assuming the type needs to be a string, adjust accordingly
+      isRequired: questionToAdd.is_required,
+      choices: questionToAdd.choices || [''], // Adjust based on your data structure for choices
+    });
+    // Open the dialog/modal if you have one for editing/adding questions
+    setOpen(true);
+  };
+
 
   const handleOpenConfirmDialog = () => {
     setOpenConfirmDialog(true);
@@ -165,6 +248,13 @@ export default function SurveyCreationPage() {
       .replace(/^./, (str) => str.toUpperCase()); // capitalize the first letter
   };
 
+  const questionTypeMapping = {
+    1: 'Likert Scale',
+    2: 'Multiple Choice',
+    3: 'True or False',
+    4: 'Short Answer'
+  };
+  
   const handleSubmitSurvey = async () => {
     if (!validateSurvey()) {
       return;
@@ -255,6 +345,8 @@ export default function SurveyCreationPage() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Container component="main" sx={{ mt: 4, mb: 4, position: 'relative' }}>
+
+
         <Typography variant="h4" gutterBottom>
           Create Survey
         </Typography>
@@ -273,7 +365,7 @@ export default function SurveyCreationPage() {
           value={surveyDescription}
           onChange={(e) => setSurveyDescription(e.target.value)}
           margin="normal"
-          placeholder="DSMC Survey" // Optional: provide a placeholder
+          placeholder="DSMC Survey"
         />
 
         {questions.map((question, index) => (
@@ -391,6 +483,58 @@ export default function SurveyCreationPage() {
 
 
       </Container>
+      <Button onClick={toggleDrawer} sx={{ position: 'fixed', right: 16, bottom: 16 }}>
+        Toggle Question Bank
+      </Button>
+      <Drawer
+  anchor="right"
+  open={isDrawerOpen}
+  onClose={toggleDrawer}
+  sx={{ '.MuiDrawer-paper': { height: '100%', maxWidth: '100%' } }}
+>
+<Box
+  sx={{ 
+    width: 300, 
+    overflow: 'auto', 
+    maxHeight: 'calc(100vh - 100px)', 
+    p: 2,
+    mt: 2, 
+  }}
+  role="presentation"
+>
+    <Typography variant="h6">
+      Question Bank
+    </Typography>
+    <TextField
+      fullWidth
+      label="Search Saved Questions"
+      variant="outlined"
+      value={searchTerm}
+      onChange={handleSearchChange}
+      margin="normal"
+      sx={{ mb: 2 }} 
+    />
+   {savedQuestions
+  .filter(question => question.question.toLowerCase().includes(searchTerm.toLowerCase()))
+  .map((question, index) => (
+    <Paper 
+      key={index} 
+      elevation={2} 
+      sx={{ m: 1, p: 2, cursor: 'pointer', '&:hover': { opacity: 0.9 } }} 
+      onClick={() => handleQuestionCardClick(question)}
+      onDoubleClick={() => handleQuestionCardDoubleClick(question)}
+    >
+      <Typography variant="body1">{question.question}</Typography>
+      <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+        Type: {questionTypeMapping[question.question_type_id]}
+      </Typography>
+    </Paper>
+))}
+
+
+
+  </Box>
+</Drawer>
 
 
 
