@@ -3,7 +3,7 @@ const express = require('express')
 const { Pool } = require('pg')
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const app = express()
 const saltRounds = 10; //const for hashing
 
