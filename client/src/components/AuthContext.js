@@ -17,18 +17,19 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const login = useCallback(async (username, password) => {
+    const login = useCallback(async (emailOrUsername) => {
         try {
-            const response = await axios.post('http://localhost:3000/login', { username, password });
-            const { token, role } = response.data;
+            const response = await axios.post('http://localhost:3000/login', { emailOrUsername });
+            const { token, role, username } = response.data;
             localStorage.setItem('token', token);
-            localStorage.setItem('role', role); // Store the user's role in local storage
+            localStorage.setItem('role', role);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             setUser({ username, role });
         } catch (error) {
             throw new Error('Invalid credentials');
         }
     }, []);
+    
 
 
     const logout = useCallback(() => {

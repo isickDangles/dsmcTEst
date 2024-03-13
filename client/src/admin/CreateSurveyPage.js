@@ -21,7 +21,7 @@ import {
   Paper,
   DialogTitle,
   Fab,
-  DialogContentText, 
+  DialogContentText,
   Drawer,
   ButtonBase
 } from '@mui/material';
@@ -49,6 +49,7 @@ export default function SurveyCreationPage() {
     isRequired: false,
     choices: [''],
   });
+
   const [open, setOpen] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [error, setError] = useState({ open: false, message: '' });
@@ -91,55 +92,42 @@ export default function SurveyCreationPage() {
       isRequired: questionToAdd.is_required !== undefined ? questionToAdd.is_required : false,
       choices: questionToAdd.choices || [''],
     };
-    
-  
+
+
     setQuestions(currentQuestions => [...currentQuestions, questionForSurvey]);
   };
-  
+
 
   let clickTimeout = null;
 
-const handleSingleClickToEditQuestion = (questionToAdd) => {
-  if (clickTimeout !== null) {
-    clearTimeout(clickTimeout);
-    clickTimeout = null;
-  }
+  const handleSingleClickToEditQuestion = (questionToAdd) => {
+    if (clickTimeout !== null) {
+      clearTimeout(clickTimeout);
+      clickTimeout = null;
+    }
 
-  clickTimeout = setTimeout(() => {
-    // Logic to populate the current question (edit box) goes here
-    setCurrentQuestion({
-      text: questionToAdd.question,
-      type: questionToAdd.question_type_id.toString(),
-      isRequired: questionToAdd.is_required,
-      choices: questionToAdd.choices || [''],
-    });
-    // Assume opening a dialog or similar for editing if needed
-    setOpen(true);
-  }, 200); // 200ms timeout to distinguish single from double click
-};
-
-const handleQuestionCardClick = (question) => {
-  handleSingleClickToEditQuestion(question);
-};
-
-const handleQuestionCardDoubleClick = (question) => {
-  clearTimeout(clickTimeout); // Prevent the single click action
-  clickTimeout = null;
-  handleDoubleClickToAddQuestion(question);
-};
-
-  
-  const handleAddQuestion = (questionToAdd) => {
-    // Populate the currentQuestion state with the data from the saved question
-    setCurrentQuestion({
-      text: questionToAdd.question,
-      type: questionToAdd.question_type_id.toString(), // Assuming the type needs to be a string, adjust accordingly
-      isRequired: questionToAdd.is_required,
-      choices: questionToAdd.choices || [''], // Adjust based on your data structure for choices
-    });
-    // Open the dialog/modal if you have one for editing/adding questions
-    setOpen(true);
+    clickTimeout = setTimeout(() => {
+      setCurrentQuestion({
+        text: questionToAdd.question,
+        type: questionToAdd.question_type_id.toString(),
+        isRequired: questionToAdd.is_required,
+        choices: questionToAdd.choices || [''],
+      });
+      setOpen(true);
+    }, 200);
   };
+
+  const handleQuestionCardClick = (question) => {
+    handleSingleClickToEditQuestion(question);
+  };
+
+  const handleQuestionCardDoubleClick = (question) => {
+    clearTimeout(clickTimeout); // Prevent the single click action
+    clickTimeout = null;
+    handleDoubleClickToAddQuestion(question);
+  };
+
+
 
 
   const handleOpenConfirmDialog = () => {
@@ -222,13 +210,23 @@ const handleQuestionCardDoubleClick = (question) => {
     if (!validateQuestion(currentQuestion)) {
       return;
     }
+    if (!currentQuestion || !currentQuestion.text) {
+      return;
+    }
+  
+    // Trim whitespace from the beginning and end of the question text
+    const trimmedQuestionText = currentQuestion.text.trim();
+  
+    // Create a new question object with the trimmed text
+    const newQuestion = { ...currentQuestion, text: trimmedQuestionText };
+  
     if (editingQuestionIndex >= 0) {
       const updatedQuestions = questions.map((question, index) =>
-        index === editingQuestionIndex ? currentQuestion : question
+        index === editingQuestionIndex ? newQuestion : question
       );
       setQuestions(updatedQuestions);
     } else {
-      setQuestions([...questions, currentQuestion]);
+      setQuestions([...questions, newQuestion]);
     }
     handleCloseDialog();
   };
@@ -255,7 +253,7 @@ const handleQuestionCardDoubleClick = (question) => {
     3: 'True or False',
     4: 'Short Answer'
   };
-  
+
   const handleSubmitSurvey = async () => {
     if (!validateSurvey()) {
       return;
@@ -271,7 +269,7 @@ const handleQuestionCardDoubleClick = (question) => {
       isRequired: question.isRequired || false,
       choices: question.choices || []
     }));
-    
+
 
     const surveyData = {
       surveyTitle: surveyName,
@@ -294,10 +292,10 @@ const handleQuestionCardDoubleClick = (question) => {
 
       const result = await response.json();
       console.log('Survey created:', result);
-      setSuccess({ open: true, message: 'Survey successfully submitted!' }); // Set success message
+      setSuccess({ open: true, message: 'Survey successfully submitted!' });
 
       setSurveyName('');
-      setSurveyDescription(''); // Reset survey description
+      setSurveyDescription('');
       setQuestions([]);
     } catch (error) {
       console.error('Error creating survey:', error);
@@ -489,54 +487,54 @@ const handleQuestionCardDoubleClick = (question) => {
         Toggle Question Bank
       </Button>
       <Drawer
-  anchor="right"
-  open={isDrawerOpen}
-  onClose={toggleDrawer}
-  sx={{ '.MuiDrawer-paper': { height: '100%', maxWidth: '100%' } }}
->
-<Box
-  sx={{ 
-    width: 300, 
-    overflow: 'auto', 
-    maxHeight: 'calc(100vh - 100px)', 
-    p: 2,
-    mt: 2, 
-  }}
-  role="presentation"
->
-    <Typography variant="h6">
-      Question Bank
-    </Typography>
-    <TextField
-      fullWidth
-      label="Search Saved Questions"
-      variant="outlined"
-      value={searchTerm}
-      onChange={handleSearchChange}
-      margin="normal"
-      sx={{ mb: 2 }} 
-    />
-   {savedQuestions
-  .filter(question => question.question.toLowerCase().includes(searchTerm.toLowerCase()))
-  .map((question, index) => (
-    <Paper 
-      key={index} 
-      elevation={2} 
-      sx={{ m: 1, p: 2, cursor: 'pointer', '&:hover': { opacity: 0.9 } }} 
-      onClick={() => handleQuestionCardClick(question)}
-      onDoubleClick={() => handleQuestionCardDoubleClick(question)}
-    >
-      <Typography variant="body1">{question.question}</Typography>
-      <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
-        Type: {questionTypeMapping[question.question_type_id]}
-      </Typography>
-    </Paper>
-))}
+        anchor="right"
+        open={isDrawerOpen}
+        onClose={toggleDrawer}
+        sx={{ '.MuiDrawer-paper': { height: '100%', maxWidth: '100%' } }}
+      >
+        <Box
+          sx={{
+            width: 300,
+            overflow: 'auto',
+            maxHeight: 'calc(100vh - 100px)',
+            p: 2,
+            mt: 2,
+          }}
+          role="presentation"
+        >
+          <Typography variant="h6">
+            Question Bank
+          </Typography>
+          <TextField
+            fullWidth
+            label="Search Saved Questions"
+            variant="outlined"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            margin="normal"
+            sx={{ mb: 2 }}
+          />
+          {savedQuestions
+            .filter(question => question.question.toLowerCase().includes(searchTerm.toLowerCase()))
+            .map((question, index) => (
+              <Paper
+                key={index}
+                elevation={2}
+                sx={{ m: 1, p: 2, cursor: 'pointer', '&:hover': { opacity: 0.9 } }}
+                onClick={() => handleQuestionCardClick(question)}
+                onDoubleClick={() => handleQuestionCardDoubleClick(question)}
+              >
+                <Typography variant="body1">{question.question}</Typography>
+                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+                  Type: {questionTypeMapping[question.question_type_id]}
+                </Typography>
+              </Paper>
+            ))}
 
 
 
-  </Box>
-</Drawer>
+        </Box>
+      </Drawer>
 
 
 
