@@ -11,10 +11,11 @@ import {
   ListItemText,
   IconButton,
   useTheme,
+  FormControl,
+  Select,
 } from '@mui/material';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useTheme } from '@mui/material/styles';
 import ErrorMessage from '../components/ErrorMessage';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
@@ -81,16 +82,6 @@ const EmailSurveyPage = () => {
   };
 
 
-
- // const respondents = [
-  //  {label: 'daniels214@marshall.edu',},
-  //  {label: 'brent.maynard@marshall.edu'},
-  //  {label: 'miller1399@marshall.edu'},
-
-  //];
-
-  //const [recipientValue, setRecipientValue] = React.useState(respondents[0]);
-  //const [inputValue, setInputValue] = React.useState(respondents[0]);
 
 
   return (
