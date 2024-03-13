@@ -7,7 +7,8 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import ErrorSnackbar from './ErrorMessage';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline, createTheme, ThemeProvider } from '@mui/material';
+import DamImage from '../components/Dam.webp'; // Import the image
 
 const Login = () => {
   const { user, login } = useAuth();
@@ -37,7 +38,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await login(username); // Pass only the username to the login function
+      await login(username); 
     } catch (error) {
       setError(error.message);
     }
@@ -47,46 +48,71 @@ const Login = () => {
     setError('');
   };
 
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
+
   return (
-    <Container component="main" maxWidth="sm"> 
-      <CssBaseline />
+    <ThemeProvider theme={darkTheme}>
       <Box
         sx={{
-          marginTop: 8,
+          backgroundImage: `url(${DamImage})`, // Use imported image
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '100vh',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Typography component="h1" variant="h4"> 
-          Sign in
-        </Typography>
-        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}> 
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="username"
-            label="Username or Email" // Adjust the label to reflect both username and email
-            name="username"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3 }}
+        <Container component="main" maxWidth="sm">
+          <CssBaseline />
+          <Box
+            sx={{
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+              borderRadius: '10px',
+              padding: '20px',
+              textAlign: 'center',
+            }}
           >
-            Sign In
-          </Button>
-        </Box>
+            <Typography component="h1" variant="h4" sx={{ color: 'white' }}>
+              Sign in
+            </Typography>
+            <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}>
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="Username or Email"
+                name="username"
+                autoComplete="username"
+                autoFocus
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                sx={{ backgroundColor: 'transparent', borderRadius: '5px', color: 'white' }} // Set background color to transparent
+                InputProps={{
+                  sx: { border: 'none' }, // Remove the border
+                }}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, backgroundColor: '#4CAF50', color: 'white' }}
+              >
+                Sign In
+              </Button>
+            </Box>
+          </Box>
+          <ErrorSnackbar open={!!error} message={error} onClose={handleCloseSnackbar} />
+        </Container>
       </Box>
-      <ErrorSnackbar open={!!error} message={error} onClose={handleCloseSnackbar} />
-    </Container>
+    </ThemeProvider>
   );
 };
 
