@@ -16,6 +16,8 @@ import {
   FormControlLabel,
   FormControl,
 } from '@mui/material';
+import ErrorMessage from '../components/ErrorMessage'
+import SuccessMessage from '../components/SuccessMessage'
 
 const SurveyPage = () => {
   const { templateId } = useParams();
@@ -25,6 +27,10 @@ const SurveyPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState({ open: false, message: '' });
+  const [success, setSuccess] = useState({ open: false, message: '' });
+
+
 
   const [responses, setResponses] = useState({});
   const handleInputChange = (questionId, response) => {
@@ -42,6 +48,8 @@ const SurveyPage = () => {
     },
   });
 
+
+
   const handleSurveySubmit = async () => {
     try {
       // Assume surveyId is obtained correctly; adjust as needed.
@@ -58,11 +66,13 @@ const SurveyPage = () => {
       }
 
       console.log('Survey submitted successfully');
+      setSuccess({ open: true, message: 'Survey successfully submitted!' });
+
     } catch (error) {
       console.error('Error submitting survey:', error);
+      setSubmitError({open: true, message: 'Survey submission error.'});
     }
   };
-
 
   useEffect(() => {
     const fetchSurveyDetails = async () => {
@@ -185,7 +195,16 @@ const SurveyPage = () => {
           <Button variant="contained" color="primary" onClick={handleSurveySubmit} sx={{ mt: 2, display: 'block', mx: 'auto' }}>
             Submit Survey
           </Button>
-
+          <SuccessMessage
+            open={success.open}
+            message={success.message}
+            autoHideDuration={6000} onClose={() => setSuccess({ ...success, open: false })}
+          />
+          <ErrorMessage
+              open={submitError.open}
+              message={submitError.message}
+              onClose={() => setSubmitError({ ...submitError, open: false })}
+          />
 
           <Button variant="contained" color="primary" onClick={() => navigate(`/respondent/dashboard`)} sx={{ mt: 1, display: 'block', mx: 'auto' }}>
             Back
