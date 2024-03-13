@@ -83,8 +83,9 @@ const EmailSurveyPage = () => {
   const handleSendEmail = () => {
     handleSubmitSurvey();
     const mailtoLink = `mailto:${recipients.join(';')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}%0A%0A%0APlease%20complete%20this%20survey%0A%0Ahttp://localhost:3000/fill-survey/5`;
-    window.location.href = mailtoLink;
-  };
+    window.open(mailtoLink, '_blank');
+};
+
   const handleAddOrganization = () => {
     setOrganizationName(organizationName)
   }

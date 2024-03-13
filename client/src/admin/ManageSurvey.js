@@ -16,7 +16,7 @@ function ManageSurvey() {
     useEffect(() => {
         const fetchSurveys = async () => {
             try {
-                const response = await fetch('/api/surveys'); // Adjust the URL to your actual API endpoint
+                const response = await fetch('/api/survey-templates'); // Adjust the URL to your actual API endpoint
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }

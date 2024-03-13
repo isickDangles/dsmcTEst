@@ -308,8 +308,21 @@ app.get('/api/survey-template/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 app.get('/api/surveys', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT s.id, s.start_date, s.end_date, st.name AS title, st.description
+       FROM surveys s
+       JOIN survey_templates st ON s.survey_template_id = st.id
+       WHERE s.deleted_at IS NULL`
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Failed to fetch surveys:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+app.get('/api/survey-templates', async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT id AS surveyTemplateID, name AS title, description FROM survey_templates WHERE deleted_at IS NULL'
@@ -320,7 +333,6 @@ app.get('/api/surveys', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 app.post('/api/survey-response/:surveyId', async (req, res) => {
   const { surveyId } = req.params;
@@ -426,7 +438,8 @@ app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
     console.error('Failed to mark survey as deleted:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
-});app.get('/api/survey-responses', async (req, res) => {
+});
+app.get('/api/survey-responses', async (req, res) => {
   try {
       const responsesQuery = `
           SELECT 
@@ -434,10 +447,13 @@ app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
               r.question_id,
               r.response,
               q.question,
-              qt.name AS question_type
+              qt.name AS question_type,
+              st.name AS survey_name
           FROM responses r
           JOIN questions q ON r.question_id = q.id
           JOIN question_types qt ON q.question_type_id = qt.id
+          JOIN surveys s ON r.survey_id = s.id
+          JOIN survey_templates st ON s.survey_template_id = st.id
           ORDER BY r.id ASC;
       `;
 
@@ -453,7 +469,5 @@ app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
       res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
-
-
 
 app.listen(5003, () => { console.log("Server started on port 5003") })

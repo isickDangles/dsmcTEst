@@ -12,7 +12,7 @@ function SendSurvey() {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await fetch('/api/surveys');
+        const response = await fetch('/api/survey-templates');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
