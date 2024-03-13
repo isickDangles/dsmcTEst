@@ -46,7 +46,7 @@ export default function SurveyCreationPage() {
   const [currentQuestion, setCurrentQuestion] = useState({
     text: '',
     type: '',
-    isRequired: '',
+    isRequired: false,
     choices: [''],
   });
   const [open, setOpen] = useState(false);
@@ -88,13 +88,14 @@ export default function SurveyCreationPage() {
     const questionForSurvey = {
       text: questionToAdd.question,
       type: questionToAdd.question_type_id.toString(),
-      isRequired: questionToAdd.is_required,
-      choices: questionToAdd.choices || [''], // Adjust according to your structure
+      isRequired: questionToAdd.is_required !== undefined ? questionToAdd.is_required : false,
+      choices: questionToAdd.choices || [''],
     };
     
-    // Add question directly to survey questions list
+  
     setQuestions(currentQuestions => [...currentQuestions, questionForSurvey]);
   };
+  
 
   let clickTimeout = null;
 
@@ -267,9 +268,10 @@ const handleQuestionCardDoubleClick = (question) => {
     const convertedQuestions = questions.map(question => ({
       text: question.text,
       questionType: parseInt(question.type, 10),
-      isRequired: question.isRequired,
+      isRequired: question.isRequired || false,
       choices: question.choices || []
     }));
+    
 
     const surveyData = {
       surveyTitle: surveyName,

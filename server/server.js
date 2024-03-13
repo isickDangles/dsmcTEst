@@ -3,7 +3,7 @@ const express = require('express')
 const { Pool } = require('pg')
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const app = express()
 const saltRounds = 10; //const for hashing
 
@@ -17,45 +17,6 @@ const pool = new Pool({
 
 app.use(express.json());
 
-
-async function questionExists(question, pool) {
-  // Normalize inputs to avoid false negatives due to case differences or extra spaces
-  const normalizedQuestionText = question.text.trim().toLowerCase();
-
-  // First, check if a question with the same text, type, and required flag exists
-  const questionQuery = `
-    SELECT q.id, q.question
-    FROM questions q
-    WHERE LOWER(q.question) = $1 AND q.question_type_id = $2 AND q.is_required = $3
-    LIMIT 1;
-  `;
-  const questionRes = await pool.query(questionQuery, [normalizedQuestionText, question.questionType, question.isRequired]);
-
-  if (questionRes.rows.length === 0) return false; // No question match found
-
-  const questionId = questionRes.rows[0].id;
-
-  // If choices are provided, verify them against existing choices for the found question
-  if (question.choices && question.choices.length > 0) {
-    const choicesQuery = `
-      SELECT c.choice_text
-      FROM choices c
-      WHERE c.question_id = $1;
-    `;
-    const choicesRes = await pool.query(choicesQuery, [questionId]);
-    const existingChoices = choicesRes.rows.map(row => row.choice_text.toLowerCase());
-
-    // Normalize and sort both arrays for a reliable comparison
-    const normalizedSubmittedChoices = question.choices.map(choice => choice.toLowerCase()).sort();
-    const sortedExistingChoices = existingChoices.sort();
-
-    // Compare the arrays
-    if (JSON.stringify(normalizedSubmittedChoices) !== JSON.stringify(sortedExistingChoices)) return false; // Choices don't match
-  }
-
-  // All checks passed, an identical question exists
-  return true;
-}
 
 // Login route
 app.post('/login', async (req, res) => {
@@ -119,7 +80,7 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
         WHERE question_id = $1;
       `;
       const choicesResult = await pool.query(choicesQuery, [question.questionid]); // Use lowercase questionid
-      
+
       surveyDetails.push({
         ...question,
         choices: choicesResult.rows.map(choiceRow => choiceRow.choice_text)
@@ -132,13 +93,13 @@ app.get('/api/survey-details/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
-
 app.post('/create-survey-template', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
 
   try {
-    await pool.query('BEGIN'); // Start a transaction
+    await pool.query('BEGIN');
 
+    // Insert the survey template
     const surveyTemplateResult = await pool.query(
       'INSERT INTO survey_templates (name, description) VALUES ($1, $2) RETURNING id',
       [surveyTitle, surveyDescription]
@@ -146,33 +107,21 @@ app.post('/create-survey-template', async (req, res) => {
     const surveyTemplateID = surveyTemplateResult.rows[0].id;
 
     for (const question of questions) {
-      let questionID;
-    
-      // Correctly await and use the questionExists check
-      const exists = await questionExists(question, pool);
-      if (exists) {
-        // Find the existing question ID (assuming questionExists ensures complete match)
-        const existingQuestionRes = await pool.query(`
-          SELECT q.id
-          FROM questions q
-          WHERE LOWER(q.question) = $1 AND q.question_type_id = $2 AND q.is_required = $3
-          LIMIT 1;
-        `, [question.text.trim().toLowerCase(), question.questionType, question.isRequired]);
-    
-        questionID = existingQuestionRes.rows[0].id;
-      } else {
-        const questionResult = await pool.query(
+      let questionID = await questionExists(question, pool);
+
+      if (!questionID) { // If the question doesn't exist, insert it
+        const questionInsertResult = await pool.query(
           'INSERT INTO questions (question, question_type_id, is_required) VALUES ($1, $2, $3) RETURNING id',
           [question.text, question.questionType, question.isRequired]
         );
-        questionID = questionResult.rows[0].id;
+        questionID = questionInsertResult.rows[0].id;
 
         // Insert choices for the new question
-        if (question.choices) {
-          for (const choiceText of question.choices) {
+        if (question.choices && question.choices.length > 0) {
+          for (const choice of question.choices) {
             await pool.query(
               'INSERT INTO choices (question_id, choice_text) VALUES ($1, $2)',
-              [questionID, choiceText]
+              [questionID, choice]
             );
           }
         }
@@ -184,16 +133,30 @@ app.post('/create-survey-template', async (req, res) => {
         [surveyTemplateID, questionID]
       );
     }
-    // End of your loop
 
-    await pool.query('COMMIT'); // Commit the transaction
+    await pool.query('COMMIT');
     res.status(201).json({ message: 'Survey template created successfully!', surveyTemplateID: surveyTemplateID });
   } catch (error) {
-    await pool.query('ROLLBACK'); // Rollback the transaction on error
-    console.error('Error creating survey template', error.stack);
-    res.status(500).json({ message: 'Error creating survey template' });
+    await pool.query('ROLLBACK');
+    console.error('Error during survey template creation:', error);
+    res.status(500).json({ message: 'Error creating survey template', error: error.message });
   }
 });
+
+async function questionExists(question, pool) {
+  // Attempt to find an existing question that matches the submitted question exactly
+  const questionQuery = `
+    SELECT q.id
+    FROM questions q
+    WHERE q.question = $1 AND q.question_type_id = $2 AND q.is_required = $3;
+  `;
+
+  const res = await pool.query(questionQuery, [question.text, question.questionType, question.isRequired]);
+
+  // If the question exists, return its ID; otherwise, return false
+  return res.rows.length > 0 ? res.rows[0].id : false;
+}
+
 
 
 // Survey template route
