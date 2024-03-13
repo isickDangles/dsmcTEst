@@ -13,7 +13,6 @@ const Login = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -37,10 +36,8 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const username = e.target.elements.username.value;
-    const password = e.target.elements.password.value;
     try {
-      await login(username, password);
+      await login(username); // Pass only the username to the login function
     } catch (error) {
       setError(error.message);
     }
@@ -71,25 +68,12 @@ const Login = () => {
             required
             fullWidth
             id="username"
-            label="Username"
+            label="Username or Email" // Adjust the label to reflect both username and email
             name="username"
             autoComplete="username"
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-          />
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
           />
           <Button
             type="submit"

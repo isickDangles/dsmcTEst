@@ -54,17 +54,23 @@ const createTables = async () => {
     `,
     // Adding users and assigning them roles
     `
-    INSERT INTO "users" (username, email, password, created_at, created_by) VALUES
-    ('Admin', 'admin@example.com', '$2b$10$Si3Ryo32psoIe2ES/LhYEeXaIDE8tc6yjAEtZDx3bFNdSqUI7odju', NOW(), 1),
-    ('Surveyor', 'surveyor@example.com', '$2b$10$ZcMT7a0ukOX4Pn.KQpYhIeQrE66/S2h8LJxIJGI8kaIm8cyCF7SBq', NOW(), 1),
-    ('Respondent', 'respondent@example.com', '$2b$10$zcFWoRmEPUkD07ksq.ST0.G6CJLPOZUkMn6/a/Nqrvca6kU3aIcke', NOW(), 1);
+    INSERT INTO "users" (username, email, created_at, created_by) VALUES
+    ('Admin', 'admin@example.com', NOW(), 1),
+    ('Surveyor1', 'surveyor1@example.com', NOW(), 1),
+    ('Surveyor2', 'surveyor2@example.com', NOW(), 1),
+    ('Respondent1', 'respondent1@example.com', NOW(), 1),
+    ('Respondent2', 'respondent2@example.com', NOW(), 1);
+
     `,
     // Adding user roles
     `
     INSERT INTO user_roles (user_id, role_id, created_at, created_by) VALUES
-    (1, 1, NOW(), 1),
-    (2, 2, NOW(), 1), 
-    (3, 3, NOW(), 1); 
+    (1, 1, NOW(), 1),   -- Admin
+    (2, 2, NOW(), 1),   -- Surveyor1
+    (3, 2, NOW(), 1),   -- Surveyor2
+    (4, 3, NOW(), 1),   -- Respondent1
+    (5, 3, NOW(), 1);   -- Respondent2
+
     `,
     // Adding question types
     `
