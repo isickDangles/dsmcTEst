@@ -5,7 +5,19 @@ import CloseIcon from '@mui/icons-material/Close';
 import MenuItemsComponent from '../admin/MenuItems';
 import logout from "./Logout";
 import { useNavigate } from 'react-router-dom';
+import { useScrollTrigger, Slide } from '@mui/material';
 
+function HideOnScroll(props) {
+    const { children } = props;
+    const trigger = useScrollTrigger();
+  
+    return (
+      <Slide appear={false} direction="down" in={!trigger}>
+        {children}
+      </Slide>
+    );
+  }
+  
 const Layout = ({ children }) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const navigate = useNavigate();
@@ -13,15 +25,15 @@ const Layout = ({ children }) => {
     const handleDrawerToggle = () => {
         setDrawerOpen(!drawerOpen);
     };
+    
+    
 
     const handleLogout = async () => {
         await logout();
     };
 
     const navigateToDashboard = () => {
-        // Access the user's role from local storage
         const role = localStorage.getItem('role');
-
         if (role) {
             switch (role) {
                 case 'Admin':
@@ -43,6 +55,7 @@ const Layout = ({ children }) => {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
+            <HideOnScroll>
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: '#192841' }}>
                 <Toolbar>
                     <IconButton
@@ -80,15 +93,17 @@ const Layout = ({ children }) => {
                     </Button>
                 </Toolbar>
             </AppBar>
+            </HideOnScroll>
             <Drawer
                 variant="persistent"
                 open={drawerOpen}
                 sx={{
-                    width: 240,
+                    width: drawerOpen ? 240 : 0,
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        width: 240,
+                        width: drawerOpen ? 240 : 0, 
                         boxSizing: 'border-box',
+                        overflowX: 'hidden', 
                     },
                 }}
             >
@@ -99,7 +114,7 @@ const Layout = ({ children }) => {
                     </List>
                 </Box>
             </Drawer>
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Box component="main" sx={{ flexGrow: 1, p: 3, transition: 'margin-left .5s', marginLeft: `${drawerOpen ? 240 : 0}px`, width: `calc(100% - ${drawerOpen ? 240 : 0}px)` }}>
                 <Toolbar />
                 {children}
             </Box>

@@ -197,7 +197,8 @@ const createTables = async () => {
       deleted_by INTEGER,
       FOREIGN KEY (question_id) REFERENCES questions (id),
       FOREIGN KEY (survey_id) REFERENCES surveys (id)
-    );`,`
+    );`,
+    `
     CREATE TABLE IF NOT EXISTS choices (
       id SERIAL PRIMARY KEY,
       question_id INTEGER,

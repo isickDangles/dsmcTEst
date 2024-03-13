@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './AuthContext'; // Adjust the path as necessary
+import { useAuth } from './AuthContext'; 
 import { useNavigate } from 'react-router-dom';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
@@ -51,7 +51,7 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm"> {/* Adjusted maxWidth */}
+    <Container component="main" maxWidth="sm"> 
       <CssBaseline />
       <Box
         sx={{
@@ -61,10 +61,10 @@ const Login = () => {
           alignItems: 'center',
         }}
       >
-        <Typography component="h1" variant="h4"> {/* Increased font size */}
+        <Typography component="h1" variant="h4"> 
           Sign in
         </Typography>
-        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}> {/* Increased spacing */}
+        <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 3 }}> 
           <TextField
             variant="outlined"
             margin="normal"
