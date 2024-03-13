@@ -233,6 +233,28 @@ app.get('/api/surveys', async (req, res) => {
 });
 
 
+app.post('/api/survey-response/:surveyId', async (req, res) => {
+  const { surveyId } = req.params;
+  const { responses } = req.body; 
+
+  try {
+    await pool.query('BEGIN');
+
+    for (const [questionId, response] of Object.entries(responses)) {
+      await pool.query(
+        'INSERT INTO responses (question_id, survey_id, response) VALUES ($1, $2, $3)',
+        [questionId, surveyId, response]
+      );
+    }
+
+    await pool.query('COMMIT');
+    res.json({ message: 'Responses submitted successfully' });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Failed to submit responses:', error);
+    res.status(500).json({ message: 'Failed to submit responses', error: error.message });
+  }
+});
 
 
 // Route to fetch all saved questions
