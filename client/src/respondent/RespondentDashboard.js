@@ -32,14 +32,13 @@ const RespondentDashboard = () => {
       </Typography>
       <Grid container spacing={4} direction="column">
         {surveys.map((survey) => (
-          <Grid item xs={12} key={survey.surveytemplateid}> {/* Ensure to use the correct key property here */}
+          <Grid item xs={12} key={survey.id}>
             <Card elevation={3}>
-              <CardActionArea onClick={() => navigate(`/fill-survey/${survey.surveytemplateid}`)}> {/* Ensure to use the correct property for navigation */}
+              <CardActionArea onClick={() => navigate(`/fill-survey/${survey.id}`)}>
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="div">
                     {survey.title}
                   </Typography>
-                  {/* Optional: Include additional survey details here */}
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -51,4 +50,3 @@ const RespondentDashboard = () => {
 };
 
 export default RespondentDashboard;
-
