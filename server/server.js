@@ -426,6 +426,32 @@ app.patch('/api/survey-template/:templateId/delete', async (req, res) => {
     console.error('Failed to mark survey as deleted:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
+});app.get('/api/survey-responses', async (req, res) => {
+  try {
+      const responsesQuery = `
+          SELECT 
+              r.id,
+              r.question_id,
+              r.response,
+              q.question,
+              qt.name AS question_type
+          FROM responses r
+          JOIN questions q ON r.question_id = q.id
+          JOIN question_types qt ON q.question_type_id = qt.id
+          ORDER BY r.id ASC;
+      `;
+
+      const { rows } = await pool.query(responsesQuery);
+
+      if (rows.length === 0) {
+          return res.status(404).json({ message: "No responses found." });
+      }
+
+      res.json(rows);
+  } catch (error) {
+      console.error('Failed to fetch responses:', error);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 });
 
 
