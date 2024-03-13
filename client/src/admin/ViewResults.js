@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TableSortLabel } from '@mui/material';
+import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Button } from '@mui/material';
 import { ArrowUpward, ArrowDownward, UnfoldMore } from '@mui/icons-material';
 
 function ViewResults() {
@@ -51,7 +51,49 @@ function ViewResults() {
 
     return questionType === "Likert Scale" ? likertScale[response] || response : response;
   };
+  const convertToCSV = (data) => {
+    const csvRows = [];
+    // Headers
+    const headers = Object.keys(data[0]);
+    csvRows.push(headers.join(','));
+    
+    // Data rows
+    for (const row of data) {
+        const values = headers.map(header => {
+            // Get the value and ensure it's a string
+            let value = '' + row[header];
+            // Optionally, prepend a tab or `="` to prevent Excel auto-formatting
+            // value = '\t' + value; // Prepend a tab character
+            // or
+            // value = `="${value}"`; // Encase in ="value" to force Excel to treat as text
+            // Ensure the value is quoted and escape existing quotes
+            value = value.replace(/"/g, '""'); // Escape double quotes
+            return `"${value}"`; // Quote the value
+        });
+        csvRows.push(values.join(','));
+    }
 
+    return csvRows.join('\n');
+};
+
+  const downloadCSV = () => {
+    const data = sortedResponses.map(row => ({
+      survey_name: row.survey_name,
+      question: row.question,
+      question_type: row.question_type,
+      response: translateLikertResponse(row.response, row.question_type),
+    }));
+    const csvData = convertToCSV(data);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'survey_responses.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   useEffect(() => {
     const fetchResponses = async () => {
       const response = await fetch('/api/survey-responses');
@@ -67,9 +109,14 @@ function ViewResults() {
   }, []);
   return (
     <Container maxWidth="xl" style={{ marginTop: '2rem' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
       <Typography variant="h4" gutterBottom>
-        All Survey Responses
+        Survey Responses
       </Typography>
+      <Button variant="contained" color="primary" onClick={downloadCSV}>
+        Download CSV
+      </Button>
+    </Box>
       <TableContainer component={Paper}>
         <Table aria-label="survey responses table">
           <TableHead>

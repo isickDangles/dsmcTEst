@@ -16,6 +16,10 @@ import {
   FormControlLabel,
   FormControl,
 } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+
+import ErrorMessage from '../components/ErrorMessage'
+import SuccessMessage from '../components/SuccessMessage'
 
 const SurveyPage = () => {
   const { templateId } = useParams();
@@ -25,6 +29,22 @@ const SurveyPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState({ open: false, message: '' });
+  const [success, setSuccess] = useState({ open: false, message: '' });
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+
+  const handleOpenConfirmDialog = () => {
+    // Validate responses before opening the dialog
+    const allRequiredAnswered = questions.every(question => 
+      !question.is_required || responses[question.questionid] !== undefined
+    );
+    
+    if (allRequiredAnswered) {
+      setOpenConfirmDialog(true);
+    } else {
+      setSubmitError({ open: true, message: 'Please answer all required questions before submitting.' });
+    }
+  };
 
   const [responses, setResponses] = useState({});
   const handleInputChange = (questionId, response) => {
@@ -42,6 +62,8 @@ const SurveyPage = () => {
     },
   });
 
+
+
   const handleSurveySubmit = async () => {
     try {
       // Assume surveyId is obtained correctly; adjust as needed.
@@ -56,13 +78,17 @@ const SurveyPage = () => {
       if (!response.ok) {
         throw new Error('Survey submission failed');
       }
+      setOpenConfirmDialog(false); // Close the dialog before submitting
 
       console.log('Survey submitted successfully');
+      setSuccess({ open: true, message: 'Survey successfully submitted!' });
+      navigate('/respondent/dashboard'); // Redirect on success
+
     } catch (error) {
       console.error('Error submitting survey:', error);
+      setSubmitError({open: true, message: 'Survey submission error.'});
     }
   };
-
 
   useEffect(() => {
     const fetchSurveyDetails = async () => {
@@ -182,10 +208,35 @@ const SurveyPage = () => {
               * Questions marked with a * are required
             </Typography>
           </Box>
-          <Button variant="contained" color="primary" onClick={handleSurveySubmit} sx={{ mt: 2, display: 'block', mx: 'auto' }}>
-            Submit Survey
-          </Button>
-
+          <Button variant="contained" color="primary" onClick={handleOpenConfirmDialog} sx={{ mt: 2, display: 'block', mx: 'auto' }}>
+      Submit Survey
+    </Button>
+    <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
+      <DialogTitle>{"Submit Survey"}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Are you sure you want to submit this survey?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenConfirmDialog(false)} color="primary">
+          Cancel
+        </Button>
+        <Button onClick={handleSurveySubmit} color="primary" autoFocus>
+          Confirm
+        </Button>
+      </DialogActions>
+    </Dialog>
+          <SuccessMessage
+            open={success.open}
+            message={success.message}
+            autoHideDuration={6000} onClose={() => setSuccess({ ...success, open: false })}
+          />
+          <ErrorMessage
+              open={submitError.open}
+              message={submitError.message}
+              onClose={() => setSubmitError({ ...submitError, open: false })}
+          />
 
           <Button variant="contained" color="primary" onClick={() => navigate(`/respondent/dashboard`)} sx={{ mt: 1, display: 'block', mx: 'auto' }}>
             Back
