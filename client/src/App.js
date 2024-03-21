@@ -17,10 +17,10 @@ import AdminTools from './admin/AdminTools';
 import AnalyzeResults from './admin/AnalyzeResults'
 import ViewResults from './admin/ViewResults'
 import ManageSurvey from './admin/ManageSurvey'
-import Notification from './surveyor/Notification'
+import Notification from './admin/Notification'
 import PreviewSurvey from './surveyor/PreviewSurvey';
 import EmailSurvey from './surveyor/EmailSurvey';
-import EmailNotification from './surveyor/EmailNotification';
+import EmailNotification from './admin/EmailNotification';
 import SurveyStatus from './admin/SurveyStatus';
 
 
@@ -112,7 +112,7 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/sendNotification" element={
-              <ProtectedRoute roles={['Surveyor']}>
+              <ProtectedRoute roles={['Admin']}>
                 <Layout><Notification /></Layout>
               </ProtectedRoute>
             } />
@@ -136,7 +136,7 @@ function App() {
             } />
 
             <Route path ="/email-notification/:templateId" element={
-              <ProtectedRoute roles={['Surveyor']}>
+              <ProtectedRoute roles={['Admin']}>
                 <Layout><EmailNotification /></Layout>
               </ProtectedRoute>
             } />

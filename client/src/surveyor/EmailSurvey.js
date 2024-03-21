@@ -20,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ErrorMessage from '../components/ErrorMessage';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
+import SuccessMessage from '../components/SuccessMessage';
 
 
 const EmailSurveyPage = () => {
@@ -37,6 +38,10 @@ const EmailSurveyPage = () => {
   const [endDate, setEndDate] = useState(null);
   const [projectName, setProjectName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [organizationSuccess, setOrganizationSuccess] = useState(false);
+  const [projectSuccess, setProjectSuccess] = useState(false);
+  const [organizationSuccessMessage, setOrganizationSuccessMessage] = useState('');
+  const [projectSuccessMessage, setProjectSuccessMessage] = useState('');
 
 
 
@@ -88,9 +93,13 @@ const EmailSurveyPage = () => {
 
   const handleAddOrganization = () => {
     setOrganizationName(organizationName)
+    setOrganizationSuccess(true);
+    setOrganizationSuccessMessage('Organization successfully added.');
   }
   const handleAddProject = () => {
     setProjectName(projectName)
+    setProjectSuccess(true);
+    setProjectSuccessMessage('Project successfully added.');
   }
 
   const handleSubmitSurvey = async () => {
@@ -305,6 +314,8 @@ const EmailSurveyPage = () => {
 
 
       <ErrorMessage open={emailError} message={errorMessage} onClose={() => setEmailError(false)} />
+      <SuccessMessage open={organizationSuccess} message={organizationSuccessMessage} autoHideDuration={3000} onClose={() => setOrganizationSuccess(false)} />
+      <SuccessMessage open={projectSuccess} message={projectSuccessMessage} autoHideDuration={3000} onClose={() => setProjectSuccess(false)} />
     </Container>
   );
 }

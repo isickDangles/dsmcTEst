@@ -11,7 +11,6 @@ const SurveyorDashboard = () => {
 
     const pages = [
         { title: 'Send Survey', path: '/sendSurvey', icon: SendIcon },
-        { title: 'Send Notifications', path: '/sendNotification', icon: NotificationsIcon },
     ];
 
     const BackgroundImageCard = styled(Card)({

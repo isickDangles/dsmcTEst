@@ -9,6 +9,7 @@ import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
 import BuildIcon from '@mui/icons-material/Build';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ const AdminDashboard = () => {
         { title: 'Admin Tools', path: '/adminTools', icon: BuildIcon },
         { title: 'Analyze Results', path: '/analyzeResults', icon: AnalyticsIcon },
         { title: 'View Results', path: '/viewResults', icon: VisibilityIcon },
+        { title: 'Send Notifications', path: '/sendNotification', icon: NotificationsIcon},
     ];
 
     const BackgroundImageCard = styled(Card)({
