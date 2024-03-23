@@ -8,12 +8,20 @@ function ViewResults() {
     surveyName: '',
     questionText: '',
     questionType: '',
+    response: '',
+    email: ''
   });
+
   const filteredResponses = responses.filter((response) =>
     response.survey_name.toLowerCase().includes(filter.surveyName.toLowerCase()) &&
     response.question.toLowerCase().includes(filter.questionText.toLowerCase()) &&
-    response.question_type.toLowerCase().includes(filter.questionType.toLowerCase())
+    response.question_type.toLowerCase().includes(filter.questionType.toLowerCase()) &&
+    response.respondent_email.toLowerCase().includes(filter.email.toLowerCase()) && // Add email filter
+    (response.response.toLowerCase().includes(filter.response.toLowerCase()) || // Partial match for response
+      filter.response.trim() === '') // Show all if filter is empty
   );
+
+
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const sortedResponses = React.useMemo(() => {
@@ -31,6 +39,7 @@ function ViewResults() {
     }
     return sortableItems;
   }, [filteredResponses, sortConfig]);
+
   const requestSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -38,7 +47,6 @@ function ViewResults() {
     }
     setSortConfig({ key, direction });
   };
-    
 
   const translateLikertResponse = (response, questionType) => {
     const likertScale = {
@@ -51,30 +59,23 @@ function ViewResults() {
 
     return questionType === "Likert Scale" ? likertScale[response] || response : response;
   };
+
   const convertToCSV = (data) => {
     const csvRows = [];
-    // Headers
     const headers = Object.keys(data[0]);
     csvRows.push(headers.join(','));
-    
-    // Data rows
+
     for (const row of data) {
-        const values = headers.map(header => {
-            // Get the value and ensure it's a string
-            let value = '' + row[header];
-            // Optionally, prepend a tab or `="` to prevent Excel auto-formatting
-            // value = '\t' + value; // Prepend a tab character
-            // or
-            // value = `="${value}"`; // Encase in ="value" to force Excel to treat as text
-            // Ensure the value is quoted and escape existing quotes
-            value = value.replace(/"/g, '""'); // Escape double quotes
-            return `"${value}"`; // Quote the value
-        });
-        csvRows.push(values.join(','));
+      const values = headers.map(header => {
+        let value = '' + row[header];
+        value = value.replace(/"/g, '""');
+        return `"${value}"`;
+      });
+      csvRows.push(values.join(','));
     }
 
     return csvRows.join('\n');
-};
+  };
 
   const downloadCSV = () => {
     const data = sortedResponses.map(row => ({
@@ -82,6 +83,7 @@ function ViewResults() {
       question: row.question,
       question_type: row.question_type,
       response: translateLikertResponse(row.response, row.question_type),
+      respondent_email: row.respondent_email,
     }));
     const csvData = convertToCSV(data);
     const blob = new Blob([csvData], { type: 'text/csv' });
@@ -94,6 +96,7 @@ function ViewResults() {
     a.click();
     document.body.removeChild(a);
   };
+
   useEffect(() => {
     const fetchResponses = async () => {
       const response = await fetch('/api/survey-responses');
@@ -110,13 +113,13 @@ function ViewResults() {
   return (
     <Container maxWidth="xl" style={{ marginTop: '2rem' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="20px">
-      <Typography variant="h4" gutterBottom>
-        Survey Responses
-      </Typography>
-      <Button variant="contained" color="primary" onClick={downloadCSV}>
-        Download CSV
-      </Button>
-    </Box>
+        <Typography variant="h4" gutterBottom>
+          Survey Responses
+        </Typography>
+        <Button variant="contained" color="primary" onClick={downloadCSV}>
+          Download CSV
+        </Button>
+      </Box>
       <TableContainer component={Paper}>
         <Table aria-label="survey responses table">
           <TableHead>
@@ -149,7 +152,7 @@ function ViewResults() {
                   {sortConfig.key === 'question' ? (sortConfig.direction === 'ascending' ? <ArrowDownward /> : <ArrowUpward />) : <UnfoldMore />}
                 </span>
               </TableCell>
-              <TableCell align="center">
+              <TableCell >
                 Question Type
                 <br />
                 <input
@@ -163,12 +166,35 @@ function ViewResults() {
                   {sortConfig.key === 'question_type' ? (sortConfig.direction === 'ascending' ? <ArrowDownward /> : <ArrowUpward />) : <UnfoldMore />}
                 </span>
               </TableCell>
-              <TableCell align="right">
+              <TableCell >
                 Response
+                <br />
+                <input
+                  type="text"
+                  placeholder="Filter..."
+                  value={filter.response}
+                  onChange={(e) => setFilter({ ...filter, response: e.target.value })}
+                  style={{ width: '100%', marginTop: '5px', background: 'rgb(97, 97, 97)', color: 'white', border: 'none', padding: '5px' }}
+                />
                 <span onClick={() => requestSort('response')}>
                   {sortConfig.key === 'response' ? (sortConfig.direction === 'ascending' ? <ArrowDownward /> : <ArrowUpward />) : <UnfoldMore />}
                 </span>
               </TableCell>
+              <TableCell >
+                Email
+                <br />
+                <input
+                  type="text"
+                  placeholder="Filter..."
+                  value={filter.email}
+                  onChange={(e) => setFilter({ ...filter, email: e.target.value })}
+                  style={{ width: '100%', marginTop: '5px', background: 'rgb(97, 97, 97)', color: 'white', border: 'none', padding: '5px' }}
+                />
+                <span onClick={() => requestSort('respondent_email')}>
+                  {sortConfig.key === 'respondent_email' ? (sortConfig.direction === 'ascending' ? <ArrowDownward /> : <ArrowUpward />) : <UnfoldMore />}
+                </span>
+              </TableCell>
+
             </TableRow>
           </TableHead>
           <TableBody>
@@ -176,8 +202,9 @@ function ViewResults() {
               <TableRow key={row.id}>
                 <TableCell>{row.survey_name}</TableCell>
                 <TableCell>{row.question}</TableCell>
-                <TableCell align="center">{row.question_type}</TableCell>
-                <TableCell align="right">{translateLikertResponse(row.response, row.question_type)}</TableCell>
+                <TableCell >{row.question_type}</TableCell>
+                <TableCell >{translateLikertResponse(row.response, row.question_type)}</TableCell>
+                <TableCell>{row.respondent_email}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -185,9 +212,6 @@ function ViewResults() {
       </TableContainer>
     </Container>
   );
-  
-  
-  
 }
 
 

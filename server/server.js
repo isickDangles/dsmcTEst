@@ -18,7 +18,6 @@ const pool = new Pool({
 app.use(express.json());
 
 // Login route
-// Login route
 app.post('/login', async (req, res) => {
   const { emailOrUsername } = req.body;
   try {
@@ -136,6 +135,7 @@ app.get('/api/survey-details/:surveyId', async (req, res) => {
   }
 });
 
+
 app.post('/create-survey-template', async (req, res) => {
   const { surveyTitle, surveyDescription, questions } = req.body;
 
@@ -188,21 +188,58 @@ app.post('/create-survey-template', async (req, res) => {
 
 //Creates a SURVEY From the template survey data, with some additional parameters
 app.post('/api/create-survey', async (req, res) => {
-  const { surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate } = req.body;
+  const { surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate, respondentEmails } = req.body;
 
   try {
     const insertSurveyQuery = `
       INSERT INTO surveys (survey_template_id, surveyor_id, organization_id, project_id, surveyor_role_id, start_date, end_date, created_at, created_by)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $2) RETURNING id;
     `;
-    const result = await pool.query(insertSurveyQuery, [surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate]);
-    const surveyId = result.rows[0].id;
-    res.status(201).json({ message: 'Survey created successfully!', surveyId: surveyId });
+    const surveyResult = await pool.query(insertSurveyQuery, [surveyTemplateId, surveyorId, organizationId, projectId, surveyorRoleId, startDate, endDate]);
+    const surveyId = surveyResult.rows[0].id;
+
+    for (const email of respondentEmails) {
+      const username = email.split('@')[0];
+      const userId = await findOrCreateUserByEmail(email, 3, username); // Role ID 3 for respondents
+
+      const userSurveyInsertQuery = `
+        INSERT INTO user_surveys (user_id, survey_id)
+        VALUES ($1, $2);
+      `;
+      await pool.query(userSurveyInsertQuery, [userId, surveyId]);
+    }
+
+    res.status(201).json({ message: 'Survey created successfully and respondents added!', surveyId: surveyId });
   } catch (error) {
-    console.error('Failed to create survey:', error);
-    res.status(500).json({ message: 'Failed to create survey', error: error.message });
+    console.error('Failed to create survey or add respondents:', error);
+    res.status(500).json({ message: 'Failed to create survey or add respondents', error: error.message });
   }
 });
+
+
+async function findOrCreateUserByEmail(email, roleId) {
+  const findUserQuery = 'SELECT id FROM users WHERE email = $1 LIMIT 1;';
+  const findResult = await pool.query(findUserQuery, [email]);
+  
+  let userId;
+  if (findResult.rows.length > 0) {
+    // User exists, return the user's ID
+    userId = findResult.rows[0].id;
+  } else {
+    const username = email.split('@')[0]; 
+
+    const createUserQuery = 'INSERT INTO "users" (username, email, created_at) VALUES ($1, $2, NOW()) RETURNING id;';
+    const createResult = await pool.query(createUserQuery, [username, email]);
+    userId = createResult.rows[0].id;
+
+    // Insert into user_roles during user creation
+    const createUserRoleQuery = 'INSERT INTO user_roles (user_id, role_id, created_at, created_by) VALUES ($1, $2, NOW(), 1);';
+    await pool.query(createUserRoleQuery, [userId, roleId]);
+  }
+
+  return userId;
+}
+
 
 //CREATE Project and ORganization 
 
@@ -308,20 +345,49 @@ app.get('/api/survey-template/:templateId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-app.get('/api/surveys', async (req, res) => {
+
+
+
+app.get('/api/surveys', authenticateToken, async (req, res) => {
+  // Assuming the user ID is stored in req.user.id from the middleware
+  const userId = req.user.userId; 
+  console.log("Authenticated User ID:", req.user.id);
+
   try {
     const { rows } = await pool.query(
       `SELECT s.id, s.start_date, s.end_date, st.name AS title, st.description
        FROM surveys s
        JOIN survey_templates st ON s.survey_template_id = st.id
-       WHERE s.deleted_at IS NULL`
+       JOIN user_surveys us ON s.id = us.survey_id
+       WHERE s.deleted_at IS NULL AND us.user_id = $1`,
+      [userId]
     );
     res.json(rows);
   } catch (error) {
-    console.error('Failed to fetch surveys:', error);
+    console.error('Failed to fetch surveys for user:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer <Token>
+
+  if (token == null) return res.sendStatus(401); // If no token is present
+
+  jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+    if (err) return res.sendStatus(403); // If token is invalid
+    console.log(user); // Log the decoded user information
+    req.user = user;
+    next();
+  });
+  
+}
+
+
 app.get('/api/survey-templates', async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -334,17 +400,18 @@ app.get('/api/survey-templates', async (req, res) => {
   }
 });
 
-app.post('/api/survey-response/:surveyId', async (req, res) => {
+app.post('/api/survey-response/:surveyId', authenticateToken, async (req, res) => {
   const { surveyId } = req.params;
   const { responses } = req.body; 
+  const userId = req.user.userId; 
 
   try {
     await pool.query('BEGIN');
 
     for (const [questionId, response] of Object.entries(responses)) {
       await pool.query(
-        'INSERT INTO responses (question_id, survey_id, response) VALUES ($1, $2, $3)',
-        [questionId, surveyId, response]
+        'INSERT INTO responses (question_id, survey_id, response, user_id) VALUES ($1, $2, $3, $4)',
+        [questionId, surveyId, response, userId]
       );
     }
 
@@ -448,12 +515,14 @@ app.get('/api/survey-responses', async (req, res) => {
               r.response,
               q.question,
               qt.name AS question_type,
-              st.name AS survey_name
+              st.name AS survey_name,
+              u.email AS respondent_email  -- Add this line to select the email
           FROM responses r
           JOIN questions q ON r.question_id = q.id
           JOIN question_types qt ON q.question_type_id = qt.id
           JOIN surveys s ON r.survey_id = s.id
           JOIN survey_templates st ON s.survey_template_id = st.id
+          JOIN users u ON r.user_id = u.id  -- Join the responses with the users table
           ORDER BY r.id ASC;
       `;
 
@@ -469,5 +538,6 @@ app.get('/api/survey-responses', async (req, res) => {
       res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
+
 
 app.listen(5003, () => { console.log("Server started on port 5003") })

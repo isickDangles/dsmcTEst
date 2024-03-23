@@ -122,12 +122,13 @@ const EmailSurveyPage = () => {
   
       const surveyData = {
         surveyTemplateId: parseInt(templateId, 10),
-        surveyorId: 1, 
+        surveyorId: 1, // Ensure this is set correctly for your use case
         organizationId: orgData.organizationId,
         projectId: projData.projectId,
-        surveyorRoleId: null, // Not sure what this is...
+        surveyorRoleId: null, // Adjust as necessary
         startDate: startDate,
         endDate: endDate,
+        respondentEmails: recipients, // Include the array of recipient emails
       };
   
       const surveyResponse = await fetch('/api/create-survey', {
@@ -138,11 +139,14 @@ const EmailSurveyPage = () => {
   
       if (surveyResponse.ok) {
         console.log('Survey created successfully');
+        // Additional success handling here, if needed
       } else {
         console.error('Failed to create survey');
+        // Handle the failure case here
       }
     } catch (error) {
       console.error('Error creating survey or dependencies:', error);
+      // Further error handling here
     }
   };
   

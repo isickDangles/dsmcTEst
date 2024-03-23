@@ -62,33 +62,35 @@ const SurveyPage = () => {
     },
   });
 
-
-
   const handleSurveySubmit = async () => {
     try {
-      // Assume surveyId is obtained correctly; adjust as needed.
+      const token = localStorage.getItem('token'); // Retrieve the token from localStorage
       const response = await fetch(`/api/survey-response/${templateId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
         },
         body: JSON.stringify({ responses }),
       });
-
+  
       if (!response.ok) {
-        throw new Error('Survey submission failed');
+        const error = await response.json();
+        throw new Error('Survey submission failed: ' + error.message);
       }
+  
       setOpenConfirmDialog(false); // Close the dialog before submitting
-
+  
       console.log('Survey submitted successfully');
       setSuccess({ open: true, message: 'Survey successfully submitted!' });
       navigate('/respondent/dashboard'); // Redirect on success
-
+  
     } catch (error) {
       console.error('Error submitting survey:', error);
-      setSubmitError({open: true, message: 'Survey submission error.'});
+      setSubmitError({ open: true, message: 'Survey submission error: ' + error.message });
     }
   };
+  
 
   useEffect(() => {
     const fetchSurveyDetails = async () => {

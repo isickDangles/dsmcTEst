@@ -194,9 +194,12 @@ const createTables = async () => {
       updated_by INTEGER,
       deleted_at TIMESTAMP,
       deleted_by INTEGER,
+      user_id INTEGER, 
       FOREIGN KEY (question_id) REFERENCES questions (id),
-      FOREIGN KEY (survey_id) REFERENCES surveys (id)
-    );`,
+      FOREIGN KEY (survey_id) REFERENCES surveys (id),
+      FOREIGN KEY (user_id) REFERENCES users (id) -- Add this line to establish the foreign key relationship
+    );
+    `,
     `
     CREATE TABLE IF NOT EXISTS choices (
       id SERIAL PRIMARY KEY,
@@ -210,6 +213,15 @@ const createTables = async () => {
       deleted_by INTEGER,
       FOREIGN KEY (question_id) REFERENCES questions (id)
     );
+  `, 
+  `CREATE TABLE IF NOT EXISTS "user_surveys" (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    survey_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (survey_id) REFERENCES surveys(id)
+  );
   `
   ];
 

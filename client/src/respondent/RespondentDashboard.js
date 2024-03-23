@@ -11,7 +11,12 @@ const RespondentDashboard = () => {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await fetch('/api/surveys');
+        const token = localStorage.getItem('token'); // Get the token from localStorage
+        const response = await fetch('/api/surveys', {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
+          },
+        });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -21,9 +26,10 @@ const RespondentDashboard = () => {
         console.error('Error fetching surveys:', error);
       }
     };
-
+  
     fetchSurveys();
-  }, []); 
+  }, []);
+  
 
   return (
     <Container maxWidth="md" style={{ marginTop: '2rem' }}>
