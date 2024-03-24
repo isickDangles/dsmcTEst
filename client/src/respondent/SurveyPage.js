@@ -64,7 +64,7 @@ const SurveyPage = () => {
 
   const handleSurveySubmit = async () => {
     try {
-      const token = localStorage.getItem('token'); // Retrieve the token from localStorage
+      const token = localStorage.getItem('token'); 
       const response = await fetch(`/api/survey-response/${templateId}`, {
         method: 'POST',
         headers: {

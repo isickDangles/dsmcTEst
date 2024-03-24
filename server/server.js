@@ -347,11 +347,30 @@ app.get('/api/survey-template/:templateId', async (req, res) => {
 });
 
 
+//returns all  Surveys despite activeness
+app.get('/api/surveys', async (req, res) => {
 
-app.get('/api/surveys', authenticateToken, async (req, res) => {
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT s.id, s.start_date, s.end_date, st.name AS title, st.description
+       FROM surveys s
+       JOIN survey_templates st ON s.survey_template_id = st.id
+       WHERE s.deleted_at IS NULL `,
+      
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Failed to fetch surveys for user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+//Gets respondent surveys that they are assigned to
+app.get('/api/mySurveys', authenticateToken, async (req, res) => {
   // Assuming the user ID is stored in req.user.id from the middleware
   const userId = req.user.userId; 
-  console.log("Authenticated User ID:", req.user.id);
+  console.log("Authenticated User ID:", req.user.userId);
 
   try {
     const { rows } = await pool.query(

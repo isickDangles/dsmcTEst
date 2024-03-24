@@ -16,12 +16,12 @@ function ManageSurvey() {
     useEffect(() => {
         const fetchSurveys = async () => {
             try {
-                const response = await fetch('/api/survey-templates'); // Adjust the URL to your actual API endpoint
+                const response = await fetch('/api/survey-templates'); 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                setSurveys(data); // Assuming the API returns an array of surveys
+                setSurveys(data); 
                 console.log(surveys);
             } catch (error) {
                 console.error("Error fetching surveys:", error);

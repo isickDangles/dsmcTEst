@@ -197,7 +197,7 @@ const createTables = async () => {
       user_id INTEGER, 
       FOREIGN KEY (question_id) REFERENCES questions (id),
       FOREIGN KEY (survey_id) REFERENCES surveys (id),
-      FOREIGN KEY (user_id) REFERENCES users (id) -- Add this line to establish the foreign key relationship
+      FOREIGN KEY (user_id) REFERENCES users (id) 
     );
     `,
     `

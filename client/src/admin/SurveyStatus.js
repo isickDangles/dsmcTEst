@@ -1,248 +1,116 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Grid,
-  Button,
-  TextField,
   Card,
   CardContent,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  CardActions,
+  Typography,
+  Container,
+  Grid,
+  Button,
+  useTheme,
+  Box
 } from '@mui/material';
 import PreviewIcon from '@mui/icons-material/Preview';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate } from 'react-router-dom';
 
-function ManageSurvey() {
+function SurveyStatus() {
   const [surveys, setSurveys] = useState([]);
-  const [filterType, setFilterType] = useState('');
-  const [searchValue, setSearchValue] = useState('');
-  const [dateFilterType, setDateFilterType] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const navigate = useNavigate();
+  const theme = useTheme();
 
   useEffect(() => {
-    const fetchSurveys = async () => {
+    async function fetchSurveys() {
       try {
-        const response = await fetch('/api/survey-templates');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const { data } = await axios.get('/api/surveys');
         setSurveys(data);
       } catch (error) {
         console.error("Error fetching surveys:", error);
       }
     }
-
     fetchSurveys();
   }, []);
 
-  const handleFilter = async (event) => {
-    event.preventDefault();
-    try {
-      const response = await fetch('/api/surveys');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      let data = await response.json();
-  
-      // Apply filtering on fetched data
-      if (filterType === 'surveyName' && searchValue) {
-        data = data.filter(survey => survey.title.toLowerCase().includes(searchValue.toLowerCase()));
-      } else if (filterType === 'surveyorName' && searchValue) {
-        data = data.filter(survey => survey.surveyorName.toLowerCase().includes(searchValue.toLowerCase()));
-      }
-  
-      if (statusFilter) {
-        data = data.filter(survey => survey.status === statusFilter);
-      }
-  
-      if (dateFilterType && startDate) {
-        data = data.filter(survey => {
-          const surveyDate = survey.date; // Assuming you have a date field in your survey objects
-          switch (dateFilterType) {
-            case 'before':
-              return surveyDate < startDate;
-            case 'after':
-              return surveyDate > startDate;
-            case 'between':
-              if (endDate) {
-                return surveyDate >= startDate && surveyDate <= endDate;
-              }
-              break;
-            default:
-              return true;
-          }
-        });
-      }
-  
-      setSurveys(data); // Update the surveys state with the filtered data
-    } catch (error) {
-      console.error("Error fetching and filtering surveys:", error);
+  const calculateStatusAndTime = (startDate, endDate) => {
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const oneHour = 60 * 60 * 1000; // milliseconds in an hour
+    const oneDay = 24 * oneHour; // milliseconds in a day
+
+    let difference, unit;
+    if (now < start) {
+      difference = start - now;
+      unit = difference < oneDay ? 'hour(s)' : 'day(s)';
+      difference = unit === 'day(s)' ? Math.round(difference / oneDay) : Math.round(difference / oneHour);
+      return `Idle - Opens in ${difference} ${unit}`;
+    } else if (now >= start && now <= end) {
+      difference = end - now;
+      unit = difference < oneDay ? 'hour(s)' : 'day(s)';
+      difference = unit === 'day(s)' ? Math.round(difference / oneDay) : Math.round(difference / oneHour);
+      return `Open - Closes in ${difference} ${unit}`;
+    } else {
+      difference = now - end;
+      unit = difference < oneDay ? 'hour(s)' : 'day(s)';
+      difference = unit === 'day(s)' ? Math.round(difference / oneDay) : Math.round(difference / oneHour);
+      return `Closed - Closed ${difference} ${unit} ago`;
     }
-  };
-  
-
-  const handleFilterTypeChange = (event) => {
-    setFilterType(event.target.value);
-    setSearchValue('');
-    setDateFilterType('');
-    setStartDate('');
-    setEndDate('');
-    setStatusFilter('');
-  };
-
-  const handleDateFilterTypeChange = (event) => {
-    setDateFilterType(event.target.value);
-    setStartDate('');
-    setEndDate('');
-    setStatusFilter('');
-  };
-
-  const handleStatusFilterChange = (event) => {
-    setStatusFilter(event.target.value);
-    setSearchValue('');
-    setDateFilterType('');
-    setStartDate('');
-    setEndDate('');
   };
 
   return (
-    <Container maxWidth="xl" style={{ marginTop: '2rem' }}>
-      <Typography variant="h4" component="h1" gutterBottom style={{ textAlign: 'center', marginBottom: '20px' }}>
-        Survey Status Portal (Work In Progress...)
+    <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        Survey Status Portal
       </Typography>
-      {/* Start of form */}
-      <form onSubmit={handleFilter}>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid item xs={12} lg={10}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth>
-                  <InputLabel id="filter-type-label">Filter By</InputLabel>
-                  <Select
-                    labelId="filter-type-label"
-                    id="filter-type"
-                    value={filterType}
-                    onChange={handleFilterTypeChange}
-                  >
-                    <MenuItem value="">Select Filter</MenuItem>
-                    <MenuItem value="surveyName">Survey Name</MenuItem>
-                    <MenuItem value="surveyorName">Surveyor Name</MenuItem>
-                    <MenuItem value="status">Status</MenuItem>
-                    <MenuItem value="date">Date</MenuItem>
-                  </Select>
-                </FormControl>
-                {filterType === 'surveyName' && (
-                  <TextField
-                    label="Survey Name"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    fullWidth
-                    style={{ marginTop: '10px' }}
-                  />
-                )}
-                {filterType === 'surveyorName' && (
-                  <TextField
-                    label="Surveyor Name"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    fullWidth
-                    style={{ marginTop: '10px' }}
-                  />
-                )}
-                {filterType === 'status' && (
-                  <FormControl fullWidth style={{ marginTop: '10px' }}>
-                    <InputLabel id="status-filter-label">Status</InputLabel>
-                    <Select
-                      labelId="status-filter-label"
-                      id="status-filter"
-                      value={statusFilter}
-                      onChange={handleStatusFilterChange}
-                    >
-                      <MenuItem value="">Select Status</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="closed">Closed</MenuItem>
-                      <MenuItem value="inactive">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                )}
-                {filterType === 'date' && (
-                  <FormControl fullWidth style={{ marginTop: '10px' }}>
-                    <InputLabel id="date-filter-type-label">Filter Date</InputLabel>
-                    <Select
-                      labelId="date-filter-type-label"
-                      id="date-filter-type"
-                      value={dateFilterType}
-                      onChange={handleDateFilterTypeChange}
-                    >
-                      <MenuItem value="">Select Date Filter</MenuItem>
-                      <MenuItem value="before">Before</MenuItem>
-                      <MenuItem value="after">After</MenuItem>
-                      <MenuItem value="between">Between</MenuItem>
-                    </Select>
-                  </FormControl>
-                )}
-              </Grid>
-              {/* Date inputs handling */}
-              {dateFilterType && (
-                <>
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      type="date"
-                      label="Start Date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                      style={{ marginTop: '10px' }}
-                    />
-                  </Grid>
-                  {dateFilterType === 'between' && (
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        type="date"
-                        label="End Date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                        style={{ marginTop: '10px' }}
-                      />
-                    </Grid>
-                  )}
-                </>
-              )}
-            </Grid>
-            {/* Filter button */}
-            <Button type="submit" variant="contained" color="primary" style={{ marginTop: '20px' }}>
-              Filter
-            </Button>
+
+      <Grid container spacing={2} justifyContent="center">
+        {surveys.map((survey) => (
+          <Grid item xs={12} md={4} key={survey.id}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <CardContent>
+                <Typography variant="h5">
+                  {survey.title}
+                </Typography>
+                <Typography sx={{ mb: 1.5, color: 'text.secondary' }}>
+                  <Box component="span" sx={{ color: getStatusColor(survey.start_date, survey.end_date, theme) }}>
+                    {calculateStatusAndTime(survey.start_date, survey.end_date)}
+                  </Box>
+                </Typography>
+                <Typography variant="body2">
+                  {survey.description}
+                </Typography>
+              </CardContent>
+              <CardActions disableSpacing>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<PreviewIcon />}
+                  onClick={() => navigate(`/preview-survey/${survey.id}`)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  View
+                </Button>
+              </CardActions>
+            </Card>
           </Grid>
-        </Grid>
-      </form>
-      {/* Displaying surveys */}
-      {surveys.map((survey) => (
-        <Card key={survey.surveytemplateid} sx={{ marginBottom: '20px' }}>
-          <CardContent>
-            <Typography variant="h5">
-              {survey.title}
-            </Typography>
-            <Button variant="contained" color="primary" startIcon={<PreviewIcon />} onClick={() => navigate(`/preview-survey/${survey.surveytemplateid}`)} style={{ cursor: 'pointer', marginRight: '10px' }}>
-              View
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+        ))}
+      </Grid>
     </Container>
   );
+
+  function getStatusColor(startDate, endDate, theme) {
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (now < start) {
+      return theme.palette.grey[500]; // Idle
+    } else if (now >= start && now <= end) {
+      return theme.palette.success.main; // Open
+    } else {
+      return theme.palette.error.main; // Closed
+    }
+  }
 }
 
-export default ManageSurvey;
+export default SurveyStatus;

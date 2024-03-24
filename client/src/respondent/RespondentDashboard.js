@@ -12,7 +12,7 @@ const RespondentDashboard = () => {
     const fetchSurveys = async () => {
       try {
         const token = localStorage.getItem('token'); // Get the token from localStorage
-        const response = await fetch('/api/surveys', {
+        const response = await fetch('/api/mySurveys', {
           headers: {
             'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
           },
