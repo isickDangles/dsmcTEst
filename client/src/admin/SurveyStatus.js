@@ -63,7 +63,7 @@ function SurveyStatus() {
         Survey Status Portal
       </Typography>
 
-      <Grid container spacing={2} justifyContent="center">
+      <Grid container spacing={2} >
         {surveys.map((survey) => (
           <Grid item xs={12} md={4} key={survey.id}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

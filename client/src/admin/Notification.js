@@ -16,7 +16,7 @@ function Notification() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setSurveys(data); // Assuming the API returns an array of surveys
+        setSurveys(data); 
       } catch (error) {
         console.error("Error fetching surveys:", error);
       }
@@ -37,7 +37,7 @@ function Notification() {
               <Card sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 80 }}>
                 <CardContent>
                   <Typography variant="h5">
-                    {survey.title} {/* Now using the correct survey property */}
+                    {survey.title} 
                   </Typography>
                 </CardContent>
                 <CardContent>
@@ -45,7 +45,7 @@ function Notification() {
                     variant="contained"
                     color="primary"
                     startIcon={<PreviewIcon />}
-                    onClick={() => navigate(`/preview-survey/${survey.id}`)} // Navigate using survey ID
+                    onClick={() => navigate(`/preview-survey/${survey.id}`)} 
                     style={{ cursor: 'pointer' }}
                   >
                     View
@@ -55,7 +55,7 @@ function Notification() {
                     color="secondary"
                     startIcon={<SendIcon />}
                     style={{ marginLeft: '10px' }}
-                    onClick={() => navigate(`/email-notification/${survey.id}`)} // Navigate using survey ID
+                    onClick={() => navigate(`/email-notification/${survey.id}`)} 
                   >
                     Send
                   </Button>

@@ -18,6 +18,7 @@ import SurveyStatus from './SurveyStatus';
 import { AuthContext } from '../components/AuthContext'; 
 
 
+// Define menu items with their corresponding text, icons, routes, and allowed roles
 export const menuItems = [
   { text: 'Create Survey', icon: <CreateIcon />, route: '/createSurvey', roles: ['Admin'] },
   { text: 'Manage Survey', icon: <AdminPanelSettingsIcon />, route: '/manageSurvey', roles: ['Admin'] },
@@ -25,16 +26,17 @@ export const menuItems = [
   { text: 'Send Survey', icon: <SendIcon />, route: '/sendSurvey', roles: [ 'Surveyor'] },
   { text: 'View Results', icon: <ListAltIcon />, route: '/viewResults', roles: ['Admin'] },
   { text: 'Analyze Results', icon: <BarChartIcon />, route: '/analyzeResults', roles: ['Admin'] },
-  { text: 'Send Notifications', icon: <NotificationsIcon />, route: '/sendNotification', roles: ['Surveyor'] },
+  { text: 'Send Notifications', icon: <NotificationsIcon />, route: '/sendNotification', roles: ['Admin'] },
   { text: 'Survey', icon: <PollIcon />, route: '/survey', roles: ['Respondent'] },
   { text: 'Admin Tools', icon: <BuildIcon />, route: '/adminTools', roles: ['Admin'] },
 
 ];
+
+
+// Component to render menu items based on user roles
 const MenuItemsComponent = () => {
   const { user } = useContext(AuthContext);
-  const backgroundImageUrl = '/static/images/buttons/breakfast.jpg'; // This is need please don't remove
   const visibleMenuItems = menuItems.filter(item => item.roles.includes(user.role));
-
   return (
     <div>
       {visibleMenuItems.map((item, index) => (
@@ -44,13 +46,12 @@ const MenuItemsComponent = () => {
           component={Link}
           to={item.route}
           style={{
-            backgroundImage: `url(${backgroundImageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            color: 'white', // Adjust as necessary for visibility
-            margin: '10px 0', // Add some space between items
-            borderRadius: '4px', // Optional: for styled corners
+            color: 'white', 
+            margin: '10px 0', 
+            borderRadius: '4px', 
           }}
         >
           <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
