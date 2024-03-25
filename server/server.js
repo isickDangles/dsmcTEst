@@ -267,6 +267,17 @@ app.post('/api/create-project', async (req, res) => {
   }
 });
 
+// Endpoint to create a surveyor role and return its ID
+app.post('/api/create-surveyor-role', async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await pool.query('INSERT INTO surveyor_roles (name) VALUES ($1) RETURNING id', [name]);
+    res.json({ surveyorRoleId: result.rows[0].id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error creating surveyor role');
+  }
+});
 
 
 async function questionExists(question, pool) {

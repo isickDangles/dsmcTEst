@@ -1,107 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Container,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  useTheme,
-  FormControl,
-  Select,
-} from '@mui/material';
-import { useParams } from 'react-router-dom';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
+import React, { useState } from 'react';
+import { Container, Typography, Paper, TextField, Button, Grid, List, ListItem, ListItemText, IconButton, Modal, Backdrop, Fade, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ErrorMessage from '../components/ErrorMessage';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
-import SuccessMessage from '../components/SuccessMessage';
-
+import EmailModal from './EmailModal';
+import ErrorMessage from '../components/ErrorMessage'; // Adjust the path as necessary
+import SuccessMessage from '../components/SuccessMessage'; // Adjust the path as necessary
+import { useParams } from 'react-router-dom';
 
 const EmailSurveyPage = () => {
-  const theme = useTheme();
-  const { templateId } = useParams(); 
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [defaultMessage, setDefaultMessage] = useState('');
-  const [isDefaultMessage, setIsDefaultMessage] = useState(false);
+  // Survey detail states
+  const [organizationName, setOrganizationName] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [surveyorRoleName, setSurveyorRoleName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const { templateId } = useParams();
+
+  // Recipients management
   const [recipients, setRecipients] = useState([]);
   const [newRecipient, setNewRecipient] = useState('');
-  const [emailError, setEmailError] = useState(false);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+
+
+  //Validation Messages States
+  const [errorOpen, setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [projectName, setProjectName] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
-  const [organizationSuccess, setOrganizationSuccess] = useState(false);
-  const [projectSuccess, setProjectSuccess] = useState(false);
-  const [organizationSuccessMessage, setOrganizationSuccessMessage] = useState('');
-  const [projectSuccessMessage, setProjectSuccessMessage] = useState('');
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
+  const handleSurveySubmissionAttempt = () => {
+    // Reset previous error states
+    setErrorOpen(false);
+    setErrorMessage('');
 
-
-  const handleStartDateChange = (newValue) => {
-    setStartDate(newValue);
-  };
-
-  const handleEndDateChange = (newValue) => {
-    setEndDate(newValue);
-  };
-  useEffect(() => {
-    const loadedDefaultMessage = localStorage.getItem('defaultMessage') || '';
-    setDefaultMessage(loadedDefaultMessage);
-    setMessage(loadedDefaultMessage);
-    setIsDefaultMessage(loadedDefaultMessage !== '');
-  }, []);
-
-  const handleSaveDefaultMessage = () => {
-    localStorage.setItem('defaultMessage', message);
-    setDefaultMessage(message);
-    setIsDefaultMessage(true);
-  };
-
-  const handleAddRecipient = () => {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(newRecipient)) {
-      setEmailError(true);
-      setErrorMessage('Please enter a valid email address.');
+    // Validation checks
+    if (!organizationName || !projectName || !surveyorRoleName) {
+      setErrorMessage("The organization, project, and surveyor role all need to be filled.");
+      setErrorOpen(true);
       return;
     }
 
-    if (!recipients.includes(newRecipient)) {
+    if (!startDate || !endDate) {
+      setErrorMessage("The start date and end date must be there.");
+      setErrorOpen(true);
+      return;
+    } else if (new Date(startDate) >= new Date(endDate)) {
+      setErrorMessage("The start date must be before the end date.");
+      setErrorOpen(true);
+      return;
+    }
+
+    if (recipients.length === 0) {
+      setErrorMessage("There must be at least 1 respondent.");
+      setErrorOpen(true);
+      return;
+    }
+
+    // If all validations pass, proceed to confirm the survey submission
+    setOpenConfirmDialog(true);
+  };
+
+
+
+
+  const handleAddRecipient = () => {
+    if (newRecipient && !recipients.includes(newRecipient)) {
       setRecipients([...recipients, newRecipient]);
       setNewRecipient('');
     }
-
-    setEmailError(false);
   };
 
-  const handleRemoveRecipient = (email) => {
-    setRecipients(recipients.filter((recipient) => recipient !== email));
+  const handleRemoveRecipient = (emailToRemove) => {
+    setRecipients(recipients.filter(email => email !== emailToRemove));
   };
 
-  const handleSendEmail = () => {
-    handleSubmitSurvey();
-    const mailtoLink = `mailto:${recipients.join(';')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}%0A%0A%0APlease%20complete%20this%20survey%0A%0Ahttp://localhost:3000/fill-survey/5`;
-    window.open(mailtoLink, '_blank');
-};
-
-  const handleAddOrganization = () => {
-    setOrganizationName(organizationName)
-    setOrganizationSuccess(true);
-    setOrganizationSuccessMessage('Organization successfully added.');
-  }
-  const handleAddProject = () => {
-    setProjectName(projectName)
-    setProjectSuccess(true);
-    setProjectSuccessMessage('Project successfully added.');
-  }
-
+  const toggleEmailModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
   const handleSubmitSurvey = async () => {
     try {
       // Create organization
@@ -110,218 +87,151 @@ const EmailSurveyPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: organizationName }),
       });
+      if (!orgResponse.ok) throw new Error('Failed to create organization');
       const orgData = await orgResponse.json();
-  
+
       // Create project
       const projResponse = await fetch('/api/create-project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: projectName }),
       });
+      if (!projResponse.ok) throw new Error('Failed to create project');
       const projData = await projResponse.json();
-  
+
+      // Create surveyor role
+      const roleResponse = await fetch('/api/create-surveyor-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: surveyorRoleName }),
+      });
+      if (!roleResponse.ok) throw new Error('Failed to create surveyor role');
+      const roleData = await roleResponse.json();
+
+      // Prepare the survey data with obtained IDs
       const surveyData = {
         surveyTemplateId: parseInt(templateId, 10),
-        surveyorId: 1, // Ensure this is set correctly for your use case
+        surveyorId: 1, // This should be dynamically set based on the actual user or surveyor
         organizationId: orgData.organizationId,
         projectId: projData.projectId,
-        surveyorRoleId: null, // Adjust as necessary
+        surveyorRoleId: roleData.surveyorRoleId,
         startDate: startDate,
         endDate: endDate,
-        respondentEmails: recipients, // Include the array of recipient emails
+        respondentEmails: recipients,
       };
-  
+
       const surveyResponse = await fetch('/api/create-survey', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(surveyData),
       });
-  
-      if (surveyResponse.ok) {
-        console.log('Survey created successfully');
-        // Additional success handling here, if needed
-      } else {
-        console.error('Failed to create survey');
-        // Handle the failure case here
-      }
+
+      if (!surveyResponse.ok) throw new Error('Failed to create survey');
+
+      // Handle successful survey creation
+      console.log('Survey created successfully');
+      clearFormFields();
+      setSuccessMessage('Survey and all dependencies created successfully!');
+      setSuccessOpen(true);
     } catch (error) {
-      console.error('Error creating survey or dependencies:', error);
-      // Further error handling here
+      console.error('Error in creating survey or dependencies:', error);
+      setErrorMessage(error.message);
+      setErrorOpen(true);
     }
   };
-  
 
-
+  const clearFormFields = () => {
+    setOrganizationName('');
+    setProjectName('');
+    setSurveyorRoleName('');
+    setStartDate('');
+    setEndDate('');
+    setRecipients([]);
+  };
 
   return (
+    <Container maxWidth="xl" sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <Typography variant="h4" gutterBottom>Email Survey Configuration</Typography>
 
-    <Container maxWidth="xl" sx={{ mt: 4, display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start', gap: 4 }}>
-      {/* Email Survey Section */}
-      <Box sx={{ flex: 2, minWidth: '250px', display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="h6" gutterBottom>
-          Email Survey
-        </Typography>
-        <TextField
-          fullWidth
-          label="Subject"
-          variant="outlined"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Enter survey subject"
-          margin="normal"
-        />
+      {/* Survey Details Section */}
+      <Paper elevation={3} sx={{ p: 2, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>Survey Details</Typography>
+        <Grid container spacing={2}>
+          {/* Organization, Project, and Surveyor Role Inputs */}
+          <Grid item xs={12} sm={4}>
+            <TextField fullWidth label="Organization Name" variant="outlined" value={organizationName} onChange={e => setOrganizationName(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField fullWidth label="Project Name" variant="outlined" value={projectName} onChange={e => setProjectName(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField fullWidth label="Surveyor Role" variant="outlined" value={surveyorRoleName} onChange={e => setSurveyorRoleName(e.target.value)} />
+          </Grid>
+          {/* Dates */}
+          <Grid item xs={12} sm={6}>
+            <TextField type="date" label="Survey Start Date" fullWidth value={startDate} onChange={e => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField type="date" label="Survey End Date" fullWidth value={endDate} onChange={e => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+          </Grid>
+        </Grid>
+      </Paper>
 
-        <Typography variant="h6" gutterBottom>
-          Date Range
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            type="date"
-            label="Start Date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-            sx={{ width: '50%' }}
-          />
-          <TextField
-            type="date"
-            label="End Date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-            sx={{ width: '50%' }}
-          />
-        </Box>
-
-        <TextareaAutosize
-          minRows={8}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '1rem',
-            borderRadius: '4px',
-            borderColor: theme.palette.mode === 'light' ? '#ccc' : 'rgba(255,255,255,0.23)',
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            resize: 'vertical'
-          }}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Write your survey message..."
-        />
-
-        {/* Button Section */}
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          {/* Save as Default Button */}
-          {message !== defaultMessage && (
-            <Button variant="contained" onClick={handleSaveDefaultMessage} sx={{ mr: 2 }}>
-              Save as Default
-            </Button>
-          )}
-
-          {/* Open in Email Client Button */}
-          <Button variant="contained" onClick={handleSendEmail}>
-            Send Survey
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Manage Respondents Section */}
-      <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
-        <Typography variant="h6" gutterBottom>
-          Manage Respondents
-        </Typography>
-        <FormControl fullWidth>
-        <InputLabel id="respondent-simple-select">Respondent</InputLabel>
-        <Select
-          labelId="respondent-simple-select"
-          id="respondent-select"
-          value={newRecipient}
-          label="Respondent"
-          onChange={(e) => setNewRecipient(e.target.value)}       
-        >
-          <MenuItem value={'daniels214@marshall.edu'}>daniels214@marshall.edu</MenuItem>
-          <MenuItem value={'brent.maynard@marshall.edu'}>brent.maynard@marshall.edu</MenuItem>
-          <MenuItem value={'miller1399@marshall.edu'}>miller1399@marshall.edu</MenuItem>
-        </Select>
-        </FormControl>
-        <TextField
-          fullWidth
-          label="Add Respondent Email"
-          variant="outlined"
-          value={newRecipient}
-          onChange={(e) => setNewRecipient(e.target.value)}
-          margin="normal"
-          placeholder="respondent@example.com"
-        />
-        <Button variant="contained" onClick={handleAddRecipient} sx={{ mt: 1 }}>
-          Add Respondent
-        </Button>
+      {/* Recipients Management */}
+      <Paper elevation={3} sx={{ p: 2, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>Manage Respondents</Typography>
+        <TextField fullWidth label="Add Respondent Email" variant="outlined" value={newRecipient} onChange={e => setNewRecipient(e.target.value)} margin="normal" />
+        <Button variant="contained" onClick={handleAddRecipient} sx={{ mt: 1 }}>Add Respondent</Button>
         <List sx={{ mt: 2, maxHeight: 300, overflow: 'auto' }}>
           {recipients.map((email, index) => (
-            <ListItem
-              key={index}
-              secondaryAction={
-                <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveRecipient(email)}>
-                  <DeleteIcon />
-                </IconButton>
-              }
-            >
+            <ListItem key={index} secondaryAction={<IconButton edge="end" aria-label="delete" onClick={() => handleRemoveRecipient(email)}><DeleteIcon /></IconButton>}>
               <ListItemText primary={email} />
             </ListItem>
           ))}
         </List>
       </Paper>
-            
-      <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
-        <Typography variant="h6" gutterBottom>
-          Manage Organization
-        </Typography>
-      <TextField
-          fullWidth
-          label="Add Organization"
-          variant="outlined"
-          value={organizationName}
-          onChange={(e) => setOrganizationName(e.target.value)}
-          margin="normal"
-          placeholder="Google"
-        />
-        <Button variant="contained" onClick={handleAddOrganization} sx={{ mt: 1 }}>
-          Add Organization
-        </Button>
-        </Paper>  <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: '250px' }}>
-        <Typography variant="h6" gutterBottom>
-          Manage Project
-        </Typography>
-      <TextField
-          fullWidth
-          label="Add Project"
-          variant="outlined"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          margin="normal"
-          placeholder="Google"
-        />
-        <Button variant="contained" onClick={handleAddProject} sx={{ mt: 1 }}>
-          Add Project
-        </Button>
-        </Paper>
+      <Dialog
+        open={openConfirmDialog}
+        onClose={() => setOpenConfirmDialog(false)}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title">{"Confirm Survey Submission"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-dialog-description">
+            Are you sure you want to submit the survey?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Cancel</Button>
+          <Button onClick={() => {
+            setOpenConfirmDialog(false); // Close the dialog
+            handleSubmitSurvey(); // Proceed to submit the survey
+          }} autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
+      {/* Button to Trigger Email Modal */}
+      <Button variant="contained" onClick={handleSurveySubmissionAttempt}>
+        Send Survey
+      </Button>
 
 
 
+      {/* Email Modal for Sending Email */}
+      <EmailModal
+        open={isModalOpen}
+        handleClose={() => setIsModalOpen(false)}
+        recipients={recipients}
+      />
+      <ErrorMessage open={errorOpen} message={errorMessage} onClose={() => setErrorOpen(false)} />
+      <SuccessMessage open={successOpen} message={successMessage} onClose={() => setSuccessOpen(false)} />
 
-
-
-
-
-
-      <ErrorMessage open={emailError} message={errorMessage} onClose={() => setEmailError(false)} />
-      <SuccessMessage open={organizationSuccess} message={organizationSuccessMessage} autoHideDuration={3000} onClose={() => setOrganizationSuccess(false)} />
-      <SuccessMessage open={projectSuccess} message={projectSuccessMessage} autoHideDuration={3000} onClose={() => setProjectSuccess(false)} />
     </Container>
   );
-}
+};
 
 export default EmailSurveyPage;
